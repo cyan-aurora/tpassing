@@ -4,8 +4,16 @@
 	<div class="wrap">
 		<a href="/submit">request feedback</a>
 		<p><a href="/about">about tpassing</a></p>
-		<p>these people are looking for feedback:</p>
-		<p>no one because no one uses this website haha</p>
-		<code>(TODO)</code>
+		<table>
+		{% for post in posts %}
+			<tr>
+				<td>
+					<a href="/{{ post.user }}/{{ post.post_id }}">view</a>
+				</td>
+				<td>{{ post.gender }}</td>
+				<td>{{ post.created }}</td>
+			</tr>
+		{% endfor %}
+		</table>
 	</div>
 {% endblock %}

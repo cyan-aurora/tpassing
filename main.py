@@ -56,6 +56,23 @@ class User(db.Model):
 	def get_id(self):
 		return str(self.user_id)
 
+class Post(db.Model):
+	post_id = db.Column(db.Integer, primary_key=True)
+	url = db.Column(db.String(150))
+	user = db.Column(db.String(100))
+	gender = db.Column(db.String(50))
+	description = db.Column(db.Text)
+	created = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+	def __init__(self, user, url, gender, description):
+		self.user = user
+		self.url = url
+		self.gender = gender
+		self.description = description
+
+	def __repr__(self):
+		return "<Post %r at %r>" % (self.user, self.date)
+
 @login_manager.user_loader
 def load_user(user_id_string):
 	return User.query.filter_by(user_id=int(user_id_string)).first()
@@ -65,7 +82,9 @@ def browse():
 	# If logged in, root is browsing. Otherwise it's explanation.
 	# Kinda like how Google Drive does it
 	if current_user.is_authenticated:
-		return render_template("browse.html")
+		number_posts = 15;
+		posts = Post.query.limit(15).all();
+		return render_template("browse.html", posts=posts)
 	else:
 		return render_template("about.html")
 
@@ -99,7 +118,15 @@ def submission_page():
 @app.route("/submit", methods=["post"])
 @login_required
 def submit_post():
-	return "You submitted. Not really LOL this thing sucks."
+	post = Post(
+			current_user.username,
+			request.form["url"],
+			request.form["gender"],
+			request.form["text"]
+			)
+	db.session.add(post)
+	db.session.commit()
+	return "You submitted."
 
 @app.route("/why-links")
 def why_links():

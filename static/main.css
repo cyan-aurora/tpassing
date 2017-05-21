@@ -65,6 +65,23 @@ h1 a {
 	margin: 0 auto;
 }
 
+table {
+	width: 100%;
+}
+
+td {
+	padding: 10px;
+	text-align: center;
+}
+
+tr:nth-child(odd) {
+	background-color: #b9cfdf;
+}
+
+tr:nth-child(even) {
+	background-color: #74b1dc;
+}
+
 .logout {
 	font-size: 20px;
 }
