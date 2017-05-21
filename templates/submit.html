@@ -1,15 +1,26 @@
-<html>
-<body>
+{% extends "standard.html" %}
+
+{% block head %}
+	{{ super() }}
+	<style>
+		input, label {
+			display: block;
+		}
+	</style>
+{% endblock %}
+
+{% block main %}
+<div class="wrap">
 	<form action="/submit" method="post">
 		<label for="url">A link to an image (try <a
-		 href="https://imgur.com/upload">imgur</a> - no login required - but
-	 don't "Share to community.") <a href="/why-links">Read more</a> about why we
-	 don't host images.</label>
+			href="https://imgur.com/upload">imgur</a> - no login required - but
+			don't "Share to community.") <a href="/why-links">Read more</a>
+			about why I don't host images.</label>
 		<input type="url" name="url" /><br />
 		<label for="gender">Target gender (if wanting to specify)</label>
 		<input type="text" name="gender" /><br />
 		<textarea name="text"></textarea>
 		<input type="submit" value="Submit" />
 	</form>
-</body>
-</html>
+</div>
+{% endblock %}

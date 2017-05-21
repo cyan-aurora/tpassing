@@ -1,0 +1,82 @@
+* {
+	padding: 0;
+	margin: 0;
+}
+
+body {
+	font-family: sans-serif;
+	color: #110310;
+}
+
+h1 {
+	margin: 20px 0;
+}
+
+p {
+	margin: 16px 0;
+}
+
+a {
+	color: #2471a8;
+}
+
+.exit-floater {
+	position: fixed;
+	top: 75px;
+	right: 20px;
+	padding: 20px;
+	background-color: #110310;
+	opacity: 0.3;
+	transition: opacity 0.1s;
+}
+
+.exit-floater:hover {
+	opacity: 0.8;
+}
+
+.wrap {
+	max-width: 800px;
+	margin: 0 auto;
+}
+
+.top-bar {
+	padding: 20px;
+	margin-bottom: 20px;
+	background-color: #74b1dc;
+}
+
+.top-bar:after {
+	content: "";
+	display: block;
+	clear: both;
+}
+
+.top-bar h1 {
+	margin: 0;
+	font-size: 30px;
+}
+
+h1 a {
+	text-decoration: none;
+}
+
+.centered-bar {
+	width: 800px;
+	margin: 0 auto;
+}
+
+.logout {
+	font-size: 20px;
+}
+	
+.login, .logout {
+	float: right;
+}
+
+.login input {
+	width: 200px;
+}
+
+.login input[type="submit"] {
+	width: auto;
+}

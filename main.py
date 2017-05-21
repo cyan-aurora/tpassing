@@ -6,7 +6,7 @@ import configparser
 
 from flask import Flask, request, session, render_template, redirect
 from flask_sqlalchemy import SQLAlchemy
-from flask.ext.login import LoginManager, login_required, login_user, logout_user
+from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 
 secure_config = configparser.ConfigParser()
 secure_config.read("secure.ini")
@@ -38,8 +38,17 @@ class User(db.Model):
 
 	# Flask login interface
 	authenticated = False
+	def login(self, given_password):
+		given_password = given_password.encode("utf-8")
+		correct_hash = self.password.encode("utf-8")
+		given_hash = bcrypt.hashpw(given_password, correct_hash)
+		self.authenticated = (given_hash == correct_hash)
+		if self.is_authenticated():
+			login_user(self)
+		return self.is_authenticated()
 	def is_authenticated(self):
-		return authenticated
+		print(self.authenticated)
+		return self.authenticated
 	def is_active(self):
 		return True
 	def is_anonymous(self):
@@ -52,8 +61,18 @@ def load_user(user_id_string):
 	return User.query.filter_by(user_id=int(user_id_string)).first()
 
 @app.route("/")
-def default():
-	return render_template("index.html")
+def browse():
+	# If logged in, root is browsing. Otherwise it's explanation.
+	# Kinda like how Google Drive does it
+	if current_user.is_authenticated:
+		return render_template("browse.html")
+	else:
+		return render_template("about.html")
+
+# So you can still access about when logged in
+@app.route("/about")
+def about():
+	return render_template("about.html")
 
 @app.route("/login", methods=["get"])
 def login_form():
@@ -61,17 +80,9 @@ def login_form():
 
 @app.route("/login", methods=["post"])
 def login():
-	logging.info(request.form["username"])
 	user = User.query.filter_by(username=request.form["username"]).first()
-	if not user:
-		return render_template("no-login.html")
-	given_password = request.form["password"].encode("utf-8")
-	correct_hash = user.password.encode("utf-8")
-	given_hash = bcrypt.hashpw(given_password, correct_hash)
-	if given_hash == correct_hash:
-		login_user(user)
-		session["username"] = user.username
-		return redirect("/browse")
+	if user and user.login(request.form["password"]):
+		return redirect("/")
 	else:
 		return render_template("no-login.html")
 
@@ -79,11 +90,6 @@ def login():
 def logout():
 	logout_user()
 	return redirect("/")
-
-@app.route("/browse")
-@login_required
-def browse_submissions():
-	return render_template("browse.html")
 
 @app.route("/submit", methods=["get"])
 @login_required
@@ -94,6 +100,10 @@ def submission_page():
 @login_required
 def submit_post():
 	return "You submitted. Not really LOL this thing sucks."
+
+@app.route("/why-links")
+def why_links():
+	return render_template("why-links.html")
 
 if __name__ == "__main__":
 	app.run(host="127.0.0.1", port=5000)

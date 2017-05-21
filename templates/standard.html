@@ -1,0 +1,22 @@
+<!doctype HTML>
+<html>
+<head>
+{% block head %}
+	<meta charset="utf-8" />
+	<link rel="stylesheet" href="/static/main.css" />
+	<title>{% block title %}tpassing{% endblock %}</title>
+{% endblock %}
+</head>
+<body>
+	<div class="top-bar">
+		{% block top_bar %}
+		<div class="centered-bar">
+			{% include "login-template.html" %}
+			<h1><a href="/">tpassing</a></h1>
+		</div>
+		{% endblock %}
+	</div>
+	<a href="https://www.google.com/" class="exit-floater">exit page quickly</a>
+	{% block main %}{% endblock %}
+</body>
+</html>

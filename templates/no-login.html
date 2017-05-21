@@ -1,17 +1,13 @@
-<html>
-<body>
-	<p>Sorry, the username or password was incorrect. There is no way to restore
-	your account. Nothing much has been lost though. Make another one.
-	Sorry!</p>
+{% extends "standard.html" %}
+{% block main %}
+	<div class="wrap">
+		<p>Sorry, the username or password was incorrect.</p>
 
-	<p>If you believe this is in error, or REALLY need to reset your password,
-	please contact me at
-	<a href="mailto:cyanauroratp@gmail.com">cyanauroratp@gmail.com</a>.</p>
+		<p>I'm sorry but there is no way to reset your password at this
+		time.</p>
 
-	<form method="post" action="/login">
-		<input type="text" name="username" />
-		<input type="password" name="password" />
-		<input type="submit" value="Submit" />
-	</form>
-</body>
-</html>
+		<p>If you believe this is in error, or REALLY need to reset your password,
+		please contact me at
+		<a href="mailto:cyanauroratp@gmail.com">cyanauroratp@gmail.com</a>.</p>
+	</div>
+{% endblock %}

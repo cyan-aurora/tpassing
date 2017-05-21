@@ -1,8 +1,11 @@
-<html>
-<body>
-	<a href="/submit">Submit Link / Request feedback</a>
-	<p>These people are looking for feedback:</p>
-	<p>No one because no one uses this website haha</p>
-	<code>(TODO)</code>
-</body>
-</html>
+{% extends "standard.html" %}
+
+{% block main %}
+	<div class="wrap">
+		<a href="/submit">request feedback</a>
+		<p><a href="/about">about tpassing</a></p>
+		<p>these people are looking for feedback:</p>
+		<p>no one because no one uses this website haha</p>
+		<code>(TODO)</code>
+	</div>
+{% endblock %}

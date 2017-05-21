@@ -1,0 +1,9 @@
+{% if current_user.is_authenticated %}
+	<a href="/logout" class="logout">log out</a>
+{% else %}
+	<form class="login" method="post" action="/login">
+		<input type="text" placeholder="username" name="username" />
+		<input type="password" placeholder="password" name="password" />
+		<input type="submit" value="log in" />
+	</form>
+{% endif %}
