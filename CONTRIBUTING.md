@@ -16,7 +16,7 @@ Things you could do to help out:
 
 How to develop the website:
 
-The website is built in [Flask](http://flask.pocoo.org/) +
+The website is built in Python 3 with [Flask](http://flask.pocoo.org/) and
 [SQLAlchemy](http://flask-sqlalchemy.pocoo.org/2.1/). The templates are HTML
 (plus Jinja, from Flask, for dynamics). It's currently running on Apache with
 WSGI Python on an old computer from 2003 running Debian. If you're familiar
