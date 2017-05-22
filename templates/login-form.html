@@ -6,27 +6,6 @@
 	</div>
 {% endblock %}
 
-{% block head %}
-	{{ super() }}
-	<style>
-		.login {
-			display: block;
-			width: 400px;
-			margin: 0 auto;
-			float: none;
-			text-align: center;
-		}
-		.login input {
-			text-align: center;
-			margin-top: 20px;
-			width: 375px;
-		}
-		.login input[type="submit"] {
-			width: 400px;
-		}
-	</style>
-{% endblock %}
-
 {% block main %}
-	{% include "login-template.html" %}
+	<div class="big-form">{% include "login-template.html" %}</div>
 {% endblock %}

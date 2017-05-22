@@ -93,6 +93,19 @@ class Post(db.Model):
 	def __repr__(self):
 		return "<Post %r at %r>" % (self.user, self.date)
 
+class RegistrationForm(Form):
+	username = StringField("Username", [
+		validators.DataRequired(),
+		validators.Length(min=1, max=99)
+	], render_kw={"placeholder": "username"})
+	password = PasswordField("Password", [
+		validators.DataRequired(),
+		validators.Length(min=6, max=60)
+	], render_kw={"placeholder": "password"})
+	confirm = PasswordField("Confirm Password", [
+		validators.EqualTo("password", "Check that the passwords match")
+	], render_kw={"placeholder": "confirm password"})
+
 @login_manager.user_loader
 def load_user(user_id_string):
 	return User.query.filter_by(user_id=int(user_id_string)).first()
@@ -185,6 +198,16 @@ def logout():
 
 	# About / unsigned-in page
 	return redirect("/")
+
+@app.route("/register", methods=["get", "post"])
+def register_page():
+	form = RegistrationForm(request.form)
+	if request.method == "POST" and form.validate():
+		user = User(form.username.data, form.password.data)
+		db.session.add(user)
+		db.session.commit()
+		return redirect("/login")
+	return render_template("register.html", form=form)
 
 @app.route("/submit", methods=["get"])
 @login_required

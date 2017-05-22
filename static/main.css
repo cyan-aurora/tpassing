@@ -98,3 +98,19 @@ tr:nth-child(even) {
 .login input[type="submit"] {
 	width: auto;
 }
+
+.big-form {
+	display: block;
+	width: 400px;
+	margin: 0 auto;
+	float: none;
+	text-align: center;
+}
+.big-form input {
+	text-align: center;
+	margin-top: 20px;
+	width: 375px;
+}
+.big-form input[type="submit"] {
+	width: 400px;
+}
