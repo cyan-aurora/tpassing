@@ -97,7 +97,11 @@ tr:first-child {
 	font-size: 20px;
 }
 
-form {
+input {
+	padding: 4px;
+}
+
+.login form {
 	display: inline;
 }
 	
@@ -115,16 +119,16 @@ form {
 
 .big-form {
 	display: block;
-	width: 400px;
+	max-width: 400px;
 	margin: 0 auto;
 	float: none;
 	text-align: center;
 }
-.big-form input {
-	text-align: center;
+.big-form input, textarea {
 	margin-bottom: 20px;
 	width: 375px;
 }
+
 .big-form input[type="submit"] {
 	width: 400px;
 }

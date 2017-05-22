@@ -18,7 +18,7 @@ from flask import Flask, request, session, render_template, redirect, send_file,
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user, UserMixin
 from flask_principal import Principal, Identity, AnonymousIdentity, identity_changed, Permission, ActionNeed
-from wtforms import Form, StringField, PasswordField, validators
+from wtforms import Form, StringField, PasswordField, TextAreaField, validators
 
 secure_config = configparser.ConfigParser()
 secure_config.read("secure.ini")
@@ -78,42 +78,54 @@ class User(db.Model, UserMixin):
 		return str(self.user_id)
 
 class Post(db.Model):
-	post_id = db.Column(db.Integer, primary_key=True)
-	url = db.Column(db.String(150))
-	user = db.Column(db.String(100))
-	gender = db.Column(db.String(50))
+	post_id     = db.Column(db.Integer, primary_key = True)
+	url         = db.Column(db.String(150))
+	user        = db.Column(db.String(100))
+	gender      = db.Column(db.String(50))
 	description = db.Column(db.Text)
-	created = db.Column(db.DateTime, default=db.func.current_timestamp())
+	created     = db.Column(db.DateTime, default = db.func.current_timestamp())
+	expires     = db.Column(db.Interval, default = datetime.timedelta(30))
 
-	def __init__(self, user, url, gender, description):
+	def __init__(self, user, url, gender, description, expires):
 		self.user = user
 		self.url = url
 		self.gender = gender
 		self.description = description
+		if expires:
+			self.expires = datetime.timedelta(int(expires))
 
 	def __repr__(self):
 		return "<Post %r at %r>" % (self.user, self.date)
 
 class LoginForm(Form):
-	username = StringField("Username", [
+	username = StringField("", [
 		validators.DataRequired(),
 		validators.Length(min=1, max=99)
 	], render_kw={"placeholder": "username"})
-	password = PasswordField("Password", [
+	password = PasswordField("", [
 		validators.DataRequired(),
 		validators.Length(min=6, max=60)
 	], render_kw={"placeholder": "password"})
 
+class SubmitForm(Form):
+	url = StringField("", [
+		validators.URL()
+	], render_kw={"placeholder": "link"})
+	gender = StringField("", [
+	], render_kw={"placeholder": "target gender (optional)"})
+	text = TextAreaField("", [
+	], render_kw={"placeholder": "description / any additional text"})
+
 class RegistrationForm(Form):
-	username = StringField("Username", [
+	username = StringField("", [
 		validators.DataRequired(),
 		validators.Length(min=1, max=99)
 	], render_kw={"placeholder": "username"})
-	password = PasswordField("Password", [
+	password = PasswordField("", [
 		validators.DataRequired(),
 		validators.Length(min=6, max=60)
 	], render_kw={"placeholder": "password"})
-	confirm = PasswordField("Confirm Password", [
+	confirm = PasswordField("", [
 		validators.EqualTo("password", "Check that the passwords match")
 	], render_kw={"placeholder": "confirm password"})
 
@@ -134,7 +146,7 @@ def browse():
 		posts = Post.query.limit(15).all();
 		return render_template("browse.html", posts=posts)
 	else:
-		return render_template("about.html")
+		return about()
 
 @app.route("/captcha/<captcha_id>")
 @login_required
@@ -221,23 +233,21 @@ def register_page():
 		return redirect("/login")
 	return render_template("register.html", form=form)
 
-@app.route("/submit", methods=["get"])
+@app.route("/submit", methods=["get", "post"])
 @login_required
 def submission_page():
-	return render_template("submit.html")
-
-@app.route("/submit", methods=["post"])
-@login_required
-def submit_post():
-	post = Post(
-			current_user.username,
-			request.form["url"],
-			request.form["gender"],
-			request.form["text"]
-			)
-	db.session.add(post)
-	db.session.commit()
-	return redirect("/post/" + str(post.post_id))
+	form = SubmitForm(request.form)
+	if request.method == "POST" and form.validate():
+		post = Post(
+				current_user.username,
+				form.url.data,
+				form.gender.data,
+				form.text.data
+				)
+		db.session.add(post)
+		db.session.commit()
+		return redirect("/post/" + str(post.post_id))
+	return render_template("submit.html", form=form)
 
 @app.route("/why-links")
 def why_links():

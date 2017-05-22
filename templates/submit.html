@@ -3,24 +3,33 @@
 {% block head %}
 	{{ super() }}
 	<style>
-		input, label {
+		.full-form {
+			width: 100%;
+		}
+		.full-form input, textarea {
 			display: block;
+			margin: 20px 0;
+			width: 100%;
+		}
+		.full-form textarea {
+			height: 80px;
 		}
 	</style>
 {% endblock %}
 
 {% block main %}
-<div class="wrap">
-	<form action="/submit" method="post">
-		<label for="url">link to an image (try <a
-			href="https://imgur.com/upload">imgur</a> - no login required - but
-			don't "Share to community.")<br /><a href="/why-links">read more</a>
-			about why I don't host images.</label>
-		<input type="url" name="url" /><br />
-		<label for="gender">target gender (if wanting to specify)</label>
-		<input type="text" name="gender" /><br />
-		<textarea name="text"></textarea>
-		<input type="submit" value="Submit" />
-	</form>
-</div>
+	<div class="wrap">
+		<form class="full-form" action="/submit" method="post">
+			<label for="url">
+				link to an image or other content.
+				try <a href="https://imgur.com/upload">imgur</a>
+				- no login required - but don't "Share to community.")<br />
+				<a href="/why-links">read more</a> about why I don't host images.<br /><br />
+			</label>
+			{{ render_field(form.url)    }}
+			{{ render_field(form.gender) }}
+			{{ render_field(form.text)   }}
+			<input type="submit" value="submit" />
+		</form>
+	</div>
 {% endblock %}
