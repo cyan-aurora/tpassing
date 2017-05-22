@@ -54,9 +54,8 @@ class User(db.Model, UserMixin):
 	# Flask login interface
 	def login(self, given_password):
 		given_password = given_password.encode("utf-8")
-		correct_hash = self.password.encode("utf-8")
-		given_hash = bcrypt.hashpw(given_password, correct_hash)
-		if given_hash == correct_hash:
+		correct_hash = self.password
+		if correct_hash and bcrypt.checkpw(given_password, correct_hash):
 			login_user(self)
 			identity_changed.send(current_app._get_current_object(), identity=Identity(self.user_id))
 			return True
@@ -238,7 +237,7 @@ def submit_post():
 			)
 	db.session.add(post)
 	db.session.commit()
-	return "You submitted."
+	return redirect("/post/" + str(post.post_id))
 
 @app.route("/why-links")
 def why_links():
