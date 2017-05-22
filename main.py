@@ -22,6 +22,8 @@ from wtforms import Form, StringField, PasswordField, validators
 
 secure_config = configparser.ConfigParser()
 secure_config.read("secure.ini")
+config = configparser.ConfigParser()
+config.read("config.ini")
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = secure_config.get("Flask", "secret_key")
@@ -139,7 +141,8 @@ def browse():
 @login_required
 def captcha_image(captcha_id):
 	if int(session["captcha_id"]) == int(captcha_id):
-		captcha = ImageCaptcha(fonts=["/usr/share/fonts/truetype/ttf-liberation/LiberationSerif-Regular.ttf"])
+		# Should exist on nearly any server but is weird enough to not be pre-trained
+		captcha = ImageCaptcha(fonts=[config.get("System", "font")])
 		return send_file(captcha.generate(session["captcha_answer"]), mimetype="image/png")
 	else:
 		return "tried to access an outdated captcha. should have accessed " + str(session["captcha_id"]), 403

@@ -32,7 +32,7 @@ First, you must set up a fake database for testing. Make sure you have myqsl
 	> exit
 	Bye
 
-If you have a mysql password make sure to put it in `dummy-config.ini` (this
+If you have a mysql password make sure to put it in `dummy-secure.ini` (this
 will be moved to `secure.ini` after setup)
 
 Now make sure you have python3 and virtualenv installed. On debian installing
