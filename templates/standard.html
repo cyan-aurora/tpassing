@@ -1,3 +1,14 @@
+{% macro render_field(field) %}
+	{{ field(**kwargs)|safe }}
+	{% if field.errors %}
+		<ul>
+			{% for error in field.errors %}
+				<li>{{ error }}</li>
+			{% endfor %}
+		</ul>
+	{% endif %}
+{% endmacro %}
+
 <!doctype HTML>
 <html>
 <head>
@@ -11,7 +22,14 @@
 	<div class="top-bar">
 		{% block top_bar %}
 		<div class="centered-bar">
-			{% include "login-template.html" %}
+			{% if current_user.is_authenticated %}
+				<a href="/logout" class="logout">log out</a>
+			{% else %}
+				<div class="login">
+					{% include "login-template.html" %}
+					<span style="font-size: 20px">| <a href="register">make account</a></span>
+				</div>
+			{% endif %}
 			<h1><a href="/">tpassing</a></h1>
 		</div>
 		{% endblock %}

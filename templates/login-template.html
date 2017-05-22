@@ -1,10 +1,6 @@
-{% if current_user.is_authenticated %}
-	<a href="/logout" class="logout">log out</a>
-{% else %}
-	<form class="login" method="post" action="/login">
-		<input type="text" placeholder="username" name="username" />
-		<input type="password" placeholder="password" name="password" />
-		<input type="submit" value="sign in" />
-		<span style="font-size: 20px"> | <a href="register">make account</a></span>
-	</form>
-{% endif %}
+
+<form method="post" action="/login">
+	{{ render_field(login_form.username) }}
+	{{ render_field(login_form.password) }}
+	<input type="submit" value="sign in" />
+</form>

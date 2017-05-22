@@ -6,10 +6,16 @@
 body {
 	font-family: sans-serif;
 	color: #110310;
+	background-color: #f4f9fe;
 }
 
 h1 {
 	margin: 20px 0;
+}
+
+h2 {
+	margin: 20px 0;
+	font-size: 30px;
 }
 
 p {
@@ -90,6 +96,10 @@ tr:first-child {
 .logout {
 	font-size: 20px;
 }
+
+form {
+	display: inline;
+}
 	
 .login, .logout {
 	float: right;
@@ -112,7 +122,7 @@ tr:first-child {
 }
 .big-form input {
 	text-align: center;
-	margin-top: 20px;
+	margin-bottom: 20px;
 	width: 375px;
 }
 .big-form input[type="submit"] {

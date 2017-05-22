@@ -1,23 +1,12 @@
 {% extends "standard.html" %}
 
-{% macro render_field(field) %}
-	{{ field(**kwargs)|safe }}
-	{% if field.errors %}
-		<ul>
-			{% for error in field.errors %}
-				<li>{{ error }}</li>
-			{% endfor %}
-		</ul>
-	{% endif %}
-	<br />
-{% endmacro %}
-
 {% block main %}
+	<h2 style="text-align: center;">make account</h2>
 	<div class="big-form">
 		<form action="/register" method="post">
-			{{ render_field(form.username) }}
-			{{ render_field(form.password) }}
-			{{ render_field(form.confirm)  }}
+			{{ render_field(form.username) }}<br />
+			{{ render_field(form.password) }}<br />
+			{{ render_field(form.confirm)  }}<br />
 			<input type="submit" value="make account" />
 		</form>
 	</div>

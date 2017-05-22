@@ -93,6 +93,16 @@ class Post(db.Model):
 	def __repr__(self):
 		return "<Post %r at %r>" % (self.user, self.date)
 
+class LoginForm(Form):
+	username = StringField("Username", [
+		validators.DataRequired(),
+		validators.Length(min=1, max=99)
+	], render_kw={"placeholder": "username"})
+	password = PasswordField("Password", [
+		validators.DataRequired(),
+		validators.Length(min=6, max=60)
+	], render_kw={"placeholder": "password"})
+
 class RegistrationForm(Form):
 	username = StringField("Username", [
 		validators.DataRequired(),
@@ -105,6 +115,10 @@ class RegistrationForm(Form):
 	confirm = PasswordField("Confirm Password", [
 		validators.EqualTo("password", "Check that the passwords match")
 	], render_kw={"placeholder": "confirm password"})
+
+@app.context_processor
+def add_login_form():
+	return { "login_form" : LoginForm(request.form) }
 
 @login_manager.user_loader
 def load_user(user_id_string):
@@ -232,4 +246,4 @@ def why_links():
 	return render_template("why-links.html")
 
 if __name__ == "__main__":
-	app.run(host="127.0.0.1", port=5000)
+	app.run(host="127.0.0.1", port=5000, debug=True)
