@@ -1,12 +1,24 @@
 #!/usr/bin/env python3
 
+import sys
+
+if sys.version_info < (3, 0):
+	sys.stdout.write("Run with python 3 please.")
+	sys.exit(1)
+
 import bcrypt
 import logging
 import configparser
+import datetime
+from random import SystemRandom
 
-from flask import Flask, request, session, render_template, redirect
+from captcha.image import ImageCaptcha
+
+from flask import Flask, request, session, render_template, redirect, send_file, make_response, current_app
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, login_required, login_user, logout_user, current_user
+from flask_login import LoginManager, login_required, login_user, logout_user, current_user, UserMixin
+from flask_principal import Principal, Identity, AnonymousIdentity, identity_changed, Permission, ActionNeed
+from wtforms import Form, StringField, PasswordField, validators
 
 secure_config = configparser.ConfigParser()
 secure_config.read("secure.ini")
@@ -23,27 +35,24 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
-class User(db.Model):
+class User(db.Model, UserMixin):
 	user_id = db.Column(db.Integer, primary_key=True)
 	username = db.Column(db.String(40), unique=True)
 	password = db.Column(db.String(60))
 
-	def __init__(self, user_id, username, password):
-		self.user_id = user_id
-		self.username = username
-		self.password = bcrypt.hashpw(password, bcrypt.gensalt())
+	def __init__(self, username, password):
+		self.username = username.encode("utf-8")
+		self.password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
 
 	def __repr__(self):
 		return "<User %r>" % self.username
 
 	# Flask login interface
-	authenticated = False
 	def login(self, given_password):
 		given_password = given_password.encode("utf-8")
 		correct_hash = self.password.encode("utf-8")
 		given_hash = bcrypt.hashpw(given_password, correct_hash)
-		self.authenticated = (given_hash == correct_hash)
-		if self.is_authenticated():
+		if given_hash == correct_hash:
 			login_user(self)
 		return self.is_authenticated()
 	def is_authenticated(self):
@@ -107,7 +116,15 @@ def login():
 
 @app.route("/logout")
 def logout():
+
+	# Flask-Login logout
 	logout_user()
+
+	# Flask-Principal logout
+	for key in ("identity.name", "identity.auth_type"):
+		session.pop(key, None)
+
+	# About / unsigned-in page
 	return redirect("/")
 
 @app.route("/submit", methods=["get"])
