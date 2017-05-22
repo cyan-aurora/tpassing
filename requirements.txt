@@ -1,7 +1,9 @@
 Flask
+SQLAlchemy
 flask-SQLAlchemy
 pymysql
 Flask-Login
 bcrypt
 Flask-Principal
 Flask-WTF
+captcha

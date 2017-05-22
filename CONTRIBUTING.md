@@ -24,14 +24,37 @@ with any of those, I'd love your help.
 
 Running:
 
-First make sure you have virtualenv installed (`sudo pip install virtualenv` or
-`sudo apt-get install python-virtualenv` will work nearly anywhere but
-Windows). Then:
+First, you must set up a fake database for testing. Make sure you have myqsl
+(`sudo apt-get install mysql-server` on debian), then:
+
+	$ mysql
+	> CREATE DATABASE transpassing;
+	> exit
+	Bye
+
+If you have a mysql password make sure to put it in `dummy-config.ini` (this
+will be moved to `secure.ini` after setup)
+
+Now make sure you have python3 and virtualenv installed. On debian installing
+python3 will look like:
+
+	$ sudo apt-get install python3 python3-dev python3-pip
+
+Then on any system but windows you can do:
+
+	$ sudo pip install virtualenv
+
+Now set up tpassing:
 
 	$ git clone https://github.com/cyan-aurora/transpassing && cd transpassing
     $ ./setup.sh # builds a virtual environment with required dependencies
 	$ . venv/bin/activate
+
+You'll be in a fully setup python environment.
+
+Now run!
+
 	$ ./main.py
 
-Then load up `localhost:5000` in a browser. To set up debugging make sure
-`debug` is `True` on the last line of `main.py`.
+Then load up `localhost:5000` in a browser. To set up debugging and
+auto-reloading make sure `debug` is `True` on the last line of `main.py`.
