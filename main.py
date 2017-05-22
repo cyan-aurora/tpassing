@@ -54,7 +54,7 @@ class User(db.Model, UserMixin):
 	# Flask login interface
 	def login(self, given_password):
 		given_password = given_password.encode("utf-8")
-		correct_hash = self.password
+		correct_hash = self.password.encode("utf-8")
 		if correct_hash and bcrypt.checkpw(given_password, correct_hash):
 			login_user(self)
 			identity_changed.send(current_app._get_current_object(), identity=Identity(self.user_id))
