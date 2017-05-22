@@ -31,6 +31,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:" + mysql_password
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+words = open("captcha-words.txt").read().splitlines()
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
@@ -54,14 +56,23 @@ class User(db.Model, UserMixin):
 		given_hash = bcrypt.hashpw(given_password, correct_hash)
 		if given_hash == correct_hash:
 			login_user(self)
-		return self.is_authenticated()
-	def is_authenticated(self):
-		print(self.authenticated)
-		return self.authenticated
-	def is_active(self):
-		return True
-	def is_anonymous(self):
-		return is_authenticated()
+			identity_changed.send(current_app._get_current_object(), identity=Identity(self.user_id))
+			return True
+		return False
+	def generate_captcha(self):
+		generator = SystemRandom()
+		number_words = 1
+		phrase = " ".join([words[generator.randrange(len(words))] for i in range(number_words)])
+		session["captcha_answer"] = phrase
+		# These don't need to be cryptographically secure, they're just to prevent you guess at the same one over and over
+		unique_ids = 200
+		session["captcha_id"] = generator.randrange(unique_ids)
+		return session["captcha_id"]
+	def check_captcha(self, given_answer):
+		if given_answer == session["captcha_answer"]:
+			session["solved_captcha"] = True
+			return True
+		return False
 	def get_id(self):
 		return str(self.user_id)
 
@@ -96,6 +107,54 @@ def browse():
 		return render_template("browse.html", posts=posts)
 	else:
 		return render_template("about.html")
+
+@app.route("/robots.txt")
+def robots():
+	return render_template("robots.txt")
+
+@app.route("/captcha/<captcha_id>")
+@login_required
+def captcha_image(captcha_id):
+	if int(session["captcha_id"]) == int(captcha_id):
+		captcha = ImageCaptcha(fonts=["/usr/share/fonts/truetype/ttf-liberation/LiberationSerif-Regular.ttf"])
+		return send_file(captcha.generate(session["captcha_answer"]), mimetype="image/png")
+	else:
+		return "tried to access an outdated captcha. should have accessed " + str(session["captcha_id"]), 403
+
+@app.route("/captcha/solve", methods=["post"])
+@login_required
+def solve_captcha():
+	if current_user.check_captcha(request.form["answer"]):
+		return redirect(request.form["to"])
+	else:
+		captcha_id = current_user.generate_captcha()
+		return render_template("captcha.html", captcha_id=captcha_id, to=request.form["to"])
+
+@app.route("/post/<post_id>")
+@login_required
+def view_post(post_id):
+	if "solved_captcha" in session and session["solved_captcha"]:
+		post = Post.query.filter_by(post_id=int(post_id)).first()
+		return render_template("post.html", post=post)
+	else:
+		return captcha_not_solved(post_id)
+
+@app.route("/post/<post_id>/link")
+@login_required
+def view_link(post_id):
+	if "solved_captcha" in session and session["solved_captcha"]:
+		post = Post.query.filter_by(post_id=int(post_id)).first()
+		return redirect(post.url)
+	else:
+		return captcha_not_solved(post_id)
+
+@app.route("/post/<post_id>")
+@app.route("/post/<post_id>/link")
+@login_required
+def captcha_not_solved(post_id):
+	to = request.path
+	captcha_id = current_user.generate_captcha()
+	return render_template("captcha.html", captcha_id=captcha_id, to=to)
 
 # So you can still access about when logged in
 @app.route("/about")
