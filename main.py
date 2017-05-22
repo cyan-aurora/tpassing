@@ -135,10 +135,6 @@ def browse():
 	else:
 		return render_template("about.html")
 
-@app.route("/robots.txt")
-def robots():
-	return render_template("robots.txt")
-
 @app.route("/captcha/<captcha_id>")
 @login_required
 def captcha_image(captcha_id):
