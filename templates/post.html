@@ -3,6 +3,7 @@
 {% block main %}
 <div class="wrap">
 	<a href="/post/{{ post.post_id }}/link">link</a>
+	<p>user: {{ post.user }}</p>
 	<p>target gender: {{ post.gender }}</p>
 	<p>{{ post.description }}</p>
 </div>

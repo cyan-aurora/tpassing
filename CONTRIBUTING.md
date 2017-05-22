@@ -24,6 +24,10 @@ with any of those, I'd love your help.
 
 Running:
 
+First make sure you have virtualenv installed (`sudo pip install virtualenv` or
+`sudo apt-get install python-virtualenv` will work nearly anywhere but
+Windows). Then:
+
 	$ git clone https://github.com/cyan-aurora/transpassing && cd transpassing
     $ ./setup.sh # builds a virtual environment with required dependencies
 	$ . venv/bin/activate
