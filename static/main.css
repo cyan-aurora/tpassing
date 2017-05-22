@@ -76,11 +76,15 @@ td {
 }
 
 tr:nth-child(odd) {
-	background-color: #b9cfdf;
+	background-color: #74b1dc;
 }
 
 tr:nth-child(even) {
-	background-color: #74b1dc;
+	background-color: #72c0f7;
+}
+
+tr:first-child {
+	background-color: #1b97f0;
 }
 
 .logout {

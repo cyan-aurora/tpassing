@@ -5,10 +5,15 @@
 		<a href="/submit">request feedback</a>
 		<p><a href="/about">about tpassing</a></p>
 		<table>
+			<tr>
+				<td>link</td>
+				<td>target gender</td>
+				<td>date submitted</td>
+			</tr>
 		{% for post in posts %}
 			<tr>
 				<td>
-					<a href="/{{ post.user }}/{{ post.post_id }}">view</a>
+					<a href="/post/{{ post.post_id }}">view</a>
 				</td>
 				<td>{{ post.gender }}</td>
 				<td>{{ post.created }}</td>
