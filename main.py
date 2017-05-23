@@ -9,6 +9,7 @@ if sys.version_info < (3, 0):
 import bcrypt
 import logging
 import configparser
+import time
 import datetime
 from random import SystemRandom
 
@@ -39,10 +40,53 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
+class CaptchaManager():
+	time_solved = 0 # TODO
+	image_id = 0
+	answer = ""
+	number_needed = 0
+
+	# Check if there has been a recent enough request to warrant requesting a captcha
+	# Only needed() calls are counted as bona fide requests
+	def needed(self):
+		if time_solved == 0:
+			time_solved = time.time()
+			return True
+		number_needed += 1
+		captcha_base_time = config.getint("Captcha", "base_wait_time")
+		captcha_time = captcha_base_time * 2 ** number_needed
+		if time.time() > self.time_solved + captcha_time:
+			return True
+		return False
+
+	# Merely check if an answer matches the last given captcha
+	def check(self, given_answer):
+		self.solved = (answer == given_answer):
+		return self.solved
+
+	# Generate a captcha, return ID (used in url) of image
+	def generate(self):
+		generator = SystemRandom()
+		number_words = config.getint("Captcha", "num_words")
+		phrase = " ".join([words[generator.randrange(len(words))] for i in range(number_words)])
+		self.answer = phrase
+		# These don't need to be cryptographically secure
+		# In order to make sure your browser doesn't cache the image, a new request is made each time, with a new id
+		unique_ids = config.getint("Captcha", "num_image_ids")
+		self.image_id = generator.randrange(unique_ids)
+		return self.image_id
+
+	def generate_image(self):
+		captcha = ImageCaptcha(fonts=[config.get("System", "font")])
+		return send_file(captcha.generate(captcha_man.answer), mimetype="image/png")
+
 class User(db.Model, UserMixin):
 	user_id = db.Column(db.Integer, primary_key=True)
 	username = db.Column(db.String(40), unique=True)
 	password = db.Column(db.String(60))
+	session_defaults = {
+		"captcha" : CaptchaManager()
+	}
 
 	def __init__(self, username, password):
 		self.username = username.encode("utf-8")
@@ -58,20 +102,6 @@ class User(db.Model, UserMixin):
 		if correct_hash and bcrypt.checkpw(given_password, correct_hash):
 			login_user(self)
 			identity_changed.send(current_app._get_current_object(), identity=Identity(self.user_id))
-			return True
-		return False
-	def generate_captcha(self):
-		generator = SystemRandom()
-		number_words = 1
-		phrase = " ".join([words[generator.randrange(len(words))] for i in range(number_words)])
-		session["captcha_answer"] = phrase
-		# These don't need to be cryptographically secure, they're just to prevent you guess at the same one over and over
-		unique_ids = 200
-		session["captcha_id"] = generator.randrange(unique_ids)
-		return session["captcha_id"]
-	def check_captcha(self, given_answer):
-		if given_answer == session["captcha_answer"]:
-			session["solved_captcha"] = True
 			return True
 		return False
 	def get_id(self):
@@ -139,26 +169,27 @@ def browse():
 @app.route("/captcha/<captcha_id>")
 @login_required
 def captcha_image(captcha_id):
-	if int(session["captcha_id"]) == int(captcha_id):
-		# Should exist on nearly any server but is weird enough to not be pre-trained
-		captcha = ImageCaptcha(fonts=[config.get("System", "font")])
-		return send_file(captcha.generate(session["captcha_answer"]), mimetype="image/png")
+	captcha_man = session["captcha"]
+	if captcha_man.image_id == int(captcha_id):
+		return captcha_man.generate_image()
 	else:
-		return "tried to access an outdated captcha. should have accessed " + str(session["captcha_id"]), 403
+		return "tried to access an outdated captcha", 403
 
 @app.route("/captcha/solve", methods=["post"])
 @login_required
 def solve_captcha():
-	if current_user.check_captcha(request.form["answer"]):
+	captcha_man = session["captcha"]
+	if captcha_man.check(request.form["answer"]):
 		return redirect(request.form["to"])
 	else:
-		captcha_id = current_user.generate_captcha()
+		captcha_id = captcha_man.generate()
 		return render_template("captcha.html", captcha_id=captcha_id, to=request.form["to"])
 
 @app.route("/post/<post_id>")
 @login_required
 def view_post(post_id):
-	if "solved_captcha" in session and session["solved_captcha"]:
+	captcha_man = session["captcha"]
+	if captcha_man.needed():
 		post = Post.query.filter_by(post_id=int(post_id)).first()
 		return render_template("post.html", post=post)
 	else:
@@ -167,7 +198,8 @@ def view_post(post_id):
 @app.route("/post/<post_id>/link")
 @login_required
 def view_link(post_id):
-	if "solved_captcha" in session and session["solved_captcha"]:
+	captcha_man = session["captcha"]
+	if captcha_man.needed():
 		post = Post.query.filter_by(post_id=int(post_id)).first()
 		return redirect(post.url)
 	else:
@@ -178,7 +210,8 @@ def view_link(post_id):
 @login_required
 def captcha_not_solved(post_id):
 	to = request.path
-	captcha_id = current_user.generate_captcha()
+	captcha_man = session["captcha"]
+	captcha_id = captcha_man.generate()
 	return render_template("captcha.html", captcha_id=captcha_id, to=to)
 
 # So you can still access about when logged in
