@@ -172,9 +172,10 @@ def solve_captcha():
 def view_post(post_id):
 	if "solved_captcha" in session and session["solved_captcha"]:
 		post = Post.query.filter_by(post_id=int(post_id)).first()
+		created = post.created
 		return render_template("post.html", post=post)
 	else:
-		return captcha_not_solved(post_id)
+		return captcha_not_solved()
 
 @app.route("/post/<post_id>/link")
 @login_required
@@ -183,12 +184,10 @@ def view_link(post_id):
 		post = Post.query.filter_by(post_id=int(post_id)).first()
 		return redirect(post.url)
 	else:
-		return captcha_not_solved(post_id)
+		return captcha_not_solved()
 
-@app.route("/post/<post_id>")
-@app.route("/post/<post_id>/link")
 @login_required
-def captcha_not_solved(post_id):
+def captcha_not_solved():
 	to = request.path
 	captcha_id = current_user.generate_captcha()
 	return render_template("captcha.html", captcha_id=captcha_id, to=to)
