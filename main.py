@@ -66,6 +66,7 @@ class CaptchaManager():
 	# Check if there has been a recent enough request to warrant requesting a captcha
 	# Only needed() calls are counted as bona fide requests
 	def needed(self):
+		self.bind_session()
 		if self.data["solved"]:
 			# A captcha has been solved and not been used yet
 			self.data["solved"] = False
@@ -87,7 +88,7 @@ class CaptchaManager():
 
 	# Merely check if an answer matches the last given captcha
 	def check(self, given_answer):
-		print(self.data["answer"])
+		self.bind_session()
 		if self.data["answer"] == given_answer:
 			# Since they could just refresh their session every time anyway, we make the users lives easier
 			self.data["number_needed"] = 0
@@ -116,11 +117,13 @@ class CaptchaManager():
 	def valid_id(self, given_id):
 		return self.data["image_id"] == int(given_id)
 
+# Singleton :( is good? TODO
+captcha = CaptchaManager()
+
 class User(db.Model, UserMixin):
 	user_id = db.Column(db.Integer, primary_key=True)
 	username = db.Column(db.String(40), unique=True)
 	password = db.Column(db.String(60))
-	captcha = CaptchaManager()
 
 	def __init__(self, username, password):
 		self.username = username.encode("utf-8")
@@ -130,7 +133,7 @@ class User(db.Model, UserMixin):
 		return "<User %r>" % self.username
 
 	def init_login(self):
-		self.captcha.bind_session()
+		pass # TODO: Remove?
 
 	# Flask login interface
 	def login(self, given_password):
@@ -335,7 +338,7 @@ def why_links():
 def debug_page():
 	if app.debug:
 		debug = {
-				"captcha data" : current_user.captcha.data,
+				"captcha data" : captcha.data,
 				"current time" : time.time()
 				}
 		return render_template("debug.html", display=debug)
