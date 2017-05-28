@@ -276,5 +276,16 @@ def submit_post():
 def why_links():
 	return render_template("why-links.html")
 
+@app.route("/debug")
+def debug_page():
+	if app.debug:
+		debug = {
+				"captcha data" : current_user.captcha.data,
+				"current time" : time.time()
+				}
+		return render_template("debug.html", display=debug)
+	else:
+		return "nice try. not available inprod."
+
 if __name__ == "__main__":
 	app.run(host="127.0.0.1", port=5000, debug=True)

@@ -1,0 +1,14 @@
+{#{% for key, value in display.items() recursive %}
+	{% if value is mapping %}
+		{
+		<br />
+		{{ loop(value) }}
+		<br />
+		}
+	{% else %}
+		{{ key }}: {{ value }}
+		<br />
+	{% endif %}
+{% endfor %}#}
+
+{{ display }}
