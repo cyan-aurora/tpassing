@@ -41,52 +41,79 @@ login_manager.init_app(app)
 login_manager.login_view = "login"
 
 class CaptchaManager():
-	time_solved = 0 # TODO
-	image_id = 0
-	answer = ""
-	number_needed = 0
+
+	def bind_session(self):
+		if not "captcha" in session:
+			# Captcha manager's data has not yet been put on the session
+			session["captcha"] = {}
+			self.data = session["captcha"]
+			self.data["last_needed"] = 0
+			self.data["solved"] = False
+			self.data["image_id"] = 0
+			self.data["answer"] = ""
+			self.data["number_needed"] = 0
+		else:
+			# Reference self.data to the session for convenience
+			self.data = session["captcha"]
 
 	# Check if there has been a recent enough request to warrant requesting a captcha
 	# Only needed() calls are counted as bona fide requests
 	def needed(self):
-		if time_solved == 0:
-			time_solved = time.time()
+		if self.data["solved"]:
+			# A captcha has been solved and not been used yet
+			self.data["solved"] = False
+			session.modified = True
+			return False
+		if self.data["last_needed"] == 0:
+			self.data["last_needed"] = time.time()
 			return True
-		number_needed += 1
+		self.data["number_needed"] += 1
+		session.modified = True
 		captcha_base_time = config.getint("Captcha", "base_wait_time")
-		captcha_time = captcha_base_time * 2 ** number_needed
-		if time.time() > self.time_solved + captcha_time:
+		captcha_time = captcha_base_time * 2 ** self.data["number_needed"]
+		if time.time() < self.data["last_needed"] + captcha_time:
+			# The last request was too recent, require a captcha
 			return True
+		self.data["last_needed"] = time.time() # It counts as a "solution" to not need it
+		session.modified = True
 		return False
 
 	# Merely check if an answer matches the last given captcha
 	def check(self, given_answer):
-		self.solved = (answer == given_answer):
-		return self.solved
+		print(self.data["answer"])
+		if self.data["answer"] == given_answer:
+			# Since they could just refresh their session every time anyway, we make the users lives easier
+			self.data["number_needed"] = 0
+			self.data["solved"] = True
+			session.modified = True
+			return True
+		return False
 
 	# Generate a captcha, return ID (used in url) of image
 	def generate(self):
 		generator = SystemRandom()
 		number_words = config.getint("Captcha", "num_words")
 		phrase = " ".join([words[generator.randrange(len(words))] for i in range(number_words)])
-		self.answer = phrase
+		self.data["answer"] = phrase
 		# These don't need to be cryptographically secure
 		# In order to make sure your browser doesn't cache the image, a new request is made each time, with a new id
 		unique_ids = config.getint("Captcha", "num_image_ids")
-		self.image_id = generator.randrange(unique_ids)
-		return self.image_id
+		self.data["image_id"] = generator.randrange(unique_ids)
+		session.modified = True
+		return self.data["image_id"]
 
 	def generate_image(self):
 		captcha = ImageCaptcha(fonts=[config.get("System", "font")])
-		return send_file(captcha.generate(captcha_man.answer), mimetype="image/png")
+		return send_file(captcha.generate(self.data["answer"]), mimetype="image/png")
+
+	def valid_id(self, given_id):
+		return self.data["image_id"] == int(given_id)
 
 class User(db.Model, UserMixin):
 	user_id = db.Column(db.Integer, primary_key=True)
 	username = db.Column(db.String(40), unique=True)
 	password = db.Column(db.String(60))
-	session_defaults = {
-		"captcha" : CaptchaManager()
-	}
+	captcha = CaptchaManager()
 
 	def __init__(self, username, password):
 		self.username = username.encode("utf-8")
@@ -94,6 +121,9 @@ class User(db.Model, UserMixin):
 
 	def __repr__(self):
 		return "<User %r>" % self.username
+
+	def init_login(self):
+		self.captcha.bind_session()
 
 	# Flask login interface
 	def login(self, given_password):
@@ -153,7 +183,9 @@ def add_login_form():
 
 @login_manager.user_loader
 def load_user(user_id_string):
-	return User.query.filter_by(user_id=int(user_id_string)).first()
+	user = User.query.filter_by(user_id=int(user_id_string)).first()
+	user.init_login()
+	return user
 
 @app.route("/")
 def browse():
@@ -169,27 +201,24 @@ def browse():
 @app.route("/captcha/<captcha_id>")
 @login_required
 def captcha_image(captcha_id):
-	captcha_man = session["captcha"]
-	if captcha_man.image_id == int(captcha_id):
-		return captcha_man.generate_image()
+	if current_user.captcha.valid_id(captcha_id):
+		return current_user.captcha.generate_image()
 	else:
-		return "tried to access an outdated captcha", 403
+		return "tried to access an outdated captcha. should be " + str(session["captcha"]["image_id"]), 403
 
 @app.route("/captcha/solve", methods=["post"])
 @login_required
 def solve_captcha():
-	captcha_man = session["captcha"]
-	if captcha_man.check(request.form["answer"]):
+	if current_user.captcha.check(request.form["answer"]):
 		return redirect(request.form["to"])
 	else:
-		captcha_id = captcha_man.generate()
+		captcha_id = current_user.captcha.generate()
 		return render_template("captcha.html", captcha_id=captcha_id, to=request.form["to"])
 
 @app.route("/post/<post_id>")
 @login_required
 def view_post(post_id):
-	captcha_man = session["captcha"]
-	if captcha_man.needed():
+	if not current_user.captcha.needed():
 		post = Post.query.filter_by(post_id=int(post_id)).first()
 		return render_template("post.html", post=post)
 	else:
@@ -198,8 +227,7 @@ def view_post(post_id):
 @app.route("/post/<post_id>/link")
 @login_required
 def view_link(post_id):
-	captcha_man = session["captcha"]
-	if captcha_man.needed():
+	if not current_user.captcha.needed():
 		post = Post.query.filter_by(post_id=int(post_id)).first()
 		return redirect(post.url)
 	else:
@@ -210,8 +238,7 @@ def view_link(post_id):
 @login_required
 def captcha_not_solved(post_id):
 	to = request.path
-	captcha_man = session["captcha"]
-	captcha_id = captcha_man.generate()
+	captcha_id = current_user.captcha.generate()
 	return render_template("captcha.html", captcha_id=captcha_id, to=to)
 
 # So you can still access about when logged in
