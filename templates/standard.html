@@ -21,7 +21,6 @@
 <body>
 	<div class="top-bar">
 		{% block top_bar %}
-		<div class="centered-bar">
 			{% if current_user.is_authenticated %}
 				<a href="/logout" class="logout">log out</a>
 			{% else %}
@@ -30,8 +29,9 @@
 					<span style="font-size: 20px">| <a href="register">make account</a></span>
 				</div>
 			{% endif %}
-			<h1><a href="/">tpassing</a></h1>
-		</div>
+			<div class="centered-bar">
+				<h1><a href="/">tpassing</a></h1>
+			</div>
 		{% endblock %}
 	</div>
 	<a href="https://www.google.com/" class="exit-floater">exit page quickly</a>
