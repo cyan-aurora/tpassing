@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# This is the main (and currently only) entry point of tpassing
+
+### IMPORT AND SETUP
+
 import sys
 
 if sys.version_info < (3, 0):
@@ -11,6 +15,7 @@ import logging
 import configparser
 import time
 import datetime
+from functools import wraps
 from random import SystemRandom
 
 from captcha.image import ImageCaptcha
@@ -39,6 +44,8 @@ words = open("captcha-words.txt").read().splitlines()
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
+
+### CLASSES
 
 class CaptchaManager():
 
@@ -189,6 +196,26 @@ class RegistrationForm(Form):
 		validators.EqualTo("password", "Check that the passwords match")
 	], render_kw={"placeholder": "confirm password"})
 
+### NON-ROUTE FUNCTIONS (library functions)
+
+# Use the decorator @captcha_required on routes to require a captcha when neccessary
+def captcha_required(route):
+	@wraps(route)
+	def check_captcha(*args, **kwargs):
+		if not captcha.needed():
+			return route(*args, **kwargs)
+		else:
+			return captcha_not_solved()
+	return check_captcha
+
+def captcha_not_solved():
+	to = request.path
+	captcha_id = captcha.generate()
+	return render_template("captcha.html", captcha_id=captcha_id, to=to)
+
+def get_post(post_id):
+	return Post.query.filter_by(post_id=int(post_id)).first()
+
 @app.context_processor
 def add_login_form():
 	return { "login_form" : LoginForm(request.form) }
@@ -199,7 +226,10 @@ def load_user(user_id_string):
 	user.init_login()
 	return user
 
+### ROUTES
+
 @app.route("/")
+@app.route("/browse")
 def browse():
 	# If logged in, root is browsing. Otherwise it's explanation.
 	# Kinda like how Google Drive does it
@@ -211,46 +241,34 @@ def browse():
 		return about()
 
 @app.route("/captcha/<captcha_id>")
-@login_required
 def captcha_image(captcha_id):
-	if current_user.captcha.valid_id(captcha_id):
-		return current_user.captcha.generate_image()
+	if captcha.valid_id(captcha_id):
+		return captcha.generate_image()
 	else:
 		return "tried to access an outdated captcha. should be " + str(session["captcha"]["image_id"]), 403
 
 @app.route("/captcha/solve", methods=["post"])
-@login_required
 def solve_captcha():
-	if current_user.captcha.check(request.form["answer"]):
+	if captcha.check(request.form["answer"]):
 		return redirect(request.form["to"])
 	else:
-		captcha_id = current_user.captcha.generate()
-		return render_template("captcha.html", captcha_id=captcha_id, to=request.form["to"])
+		return "you didn't get it right buddy"
+		return captcha_not_solved()
 
 @app.route("/post/<post_id>")
 @login_required
+@captcha_required
 def view_post(post_id):
-	if not current_user.captcha.needed():
-		post = Post.query.filter_by(post_id=int(post_id)).first()
-		created = post.created
-		return render_template("post.html", post=post)
-	else:
-		return captcha_not_solved()
+	post = get_post(post_id)
+	created = post.created
+	return render_template("post.html", post=post)
 
 @app.route("/post/<post_id>/link")
 @login_required
+@captcha_required
 def view_link(post_id):
-	if not current_user.captcha.needed():
-		post = Post.query.filter_by(post_id=int(post_id)).first()
-		return redirect(post.url)
-	else:
-		return captcha_not_solved()
-
-@login_required
-def captcha_not_solved():
-	to = request.path
-	captcha_id = current_user.captcha.generate()
-	return render_template("captcha.html", captcha_id=captcha_id, to=to)
+	post = get_post(post_id)
+	return redirect(post.url)
 
 # So you can still access about when logged in
 @app.route("/about")
@@ -283,6 +301,7 @@ def logout():
 	return redirect("/")
 
 @app.route("/register", methods=["get", "post"])
+@captcha_required
 def register_page():
 	form = RegistrationForm(request.form)
 	if request.method == "POST" and form.validate():
