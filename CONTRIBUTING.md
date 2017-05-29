@@ -48,13 +48,8 @@ Now set up tpassing:
 
 	$ git clone https://github.com/cyan-aurora/transpassing && cd transpassing
     $ ./setup.sh # builds a virtual environment with required dependencies
-	$ . venv/bin/activate
+	$ ./init.sh
 
-You'll be in a fully setup python environment.
+Then load up `localhost:5000` in a browser.
 
-Now run!
-
-	$ ./main.py
-
-Then load up `localhost:5000` in a browser. To set up debugging and
-auto-reloading make sure `debug` is `True` on the last line of `main.py`.
+**Please** email me if you have *any* questions: cyanauroratp@gmail.com
