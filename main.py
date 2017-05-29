@@ -167,7 +167,7 @@ class Post(db.Model):
 	def __repr__(self):
 		return "<Post %r at %r>" % (self.user, self.date)
 
-class LoginForm(Form):
+class Login_Form(Form):
 	username = StringField("", [
 		validators.DataRequired(),
 		validators.Length(min=1, max=99)
@@ -177,7 +177,7 @@ class LoginForm(Form):
 		validators.Length(min=6, max=60)
 	], render_kw={"placeholder": "password"})
 
-class SubmitForm(Form):
+class Submit_Form(Form):
 	url = StringField("", [
 		validators.URL()
 	], render_kw={"placeholder": "link"})
@@ -185,8 +185,10 @@ class SubmitForm(Form):
 	], render_kw={"placeholder": "target gender (optional)"})
 	text = TextAreaField("", [
 	], render_kw={"placeholder": "description / any additional text"})
+	expires = StringField("days to expiration: ", [
+	], render_kw={"placeholder": "days"}, default=30)
 
-class RegistrationForm(Form):
+class Registration_Form(Form):
 	username = StringField("", [
 		validators.DataRequired(),
 		validators.Length(min=1, max=99)
@@ -221,7 +223,7 @@ def get_post(post_id):
 
 @app.context_processor
 def add_login_form():
-	return { "login_form" : LoginForm(request.form) }
+	return { "login_form" : Login_Form(request.form) }
 
 @login_manager.user_loader
 def load_user(user_id_string):
@@ -255,7 +257,6 @@ def solve_captcha():
 	if captcha.check(request.form["answer"]):
 		return redirect(request.form["to"])
 	else:
-		return "you didn't get it right buddy"
 		return captcha_not_solved()
 
 @app.route("/post/<post_id>")
@@ -316,8 +317,9 @@ def register_page():
 
 @app.route("/submit", methods=["get", "post"])
 @login_required
+@captcha_required
 def submission_page():
-	form = SubmitForm(request.form)
+	form = Submit_Form(request.form)
 	if request.method == "POST" and form.validate():
 		post = Post(
 				current_user.username,
