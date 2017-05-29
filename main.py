@@ -327,7 +327,7 @@ def logout():
 @app.route("/register", methods=["get", "post"])
 @captcha_required
 def register_page():
-	form = RegistrationForm(request.form)
+	form = Registration_Form(request.form)
 	if request.method == "POST" and form.validate():
 		user = User(form.username.data, form.password.data)
 		db.session.add(user)
