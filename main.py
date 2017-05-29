@@ -164,7 +164,7 @@ class Post(db.Model):
 		self.expires = datetime.datetime.now() + datetime.timedelta(days=int(days_to_expiration))
 
 	def __repr__(self):
-		return "<Post %r at %r>" % (self.user, self.date)
+		return "<Post %r at %r>" % (self.user, self.expires)
 
 class Login_Form(Form):
 	username = StringField("", [
