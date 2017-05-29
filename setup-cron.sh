@@ -6,4 +6,7 @@
 
 echo "This will set up a row deletion script on expired entries. It's very
 important for security inprod but not so much for debugging."
-(crontab -l; echo 00 04 \* \* \* "cd $PWD && ./delete-expired.py") | crontab -
+# TODO: Make this less lke line noise
+(crontab -l; echo 00 04 \* \* \* "cd $PWD && ./delete-expired.sh") | crontab -
+echo "Done."
+crontab -l

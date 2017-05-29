@@ -7,5 +7,15 @@
 from main import db, User, Post
 import datetime
 
-d = Post.query.filter(Post.expires <= datetime.datetime.now())
-d.delete(synchronize_session=False)
+q = Post.query.filter(Post.expires <= datetime.datetime.now())
+count = q.count()
+print(datetime.datetime.now(), end="> ")
+print("Found " + str(count) + " old entries.", end="")
+# Add this to make grepping easire
+if count:
+	print(" | Deleted")
+else:
+	# Add a newline finally
+	print()
+q.delete(synchronize_session="fetch")
+db.session.commit()

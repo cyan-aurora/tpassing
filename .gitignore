@@ -1,6 +1,9 @@
 # Important: Secure files. Never commit!!!
 secure.ini
 
+# Don't upload conflicting logs etc
+delete-expired.log
+
 # Created by https://www.gitignore.io/api/vim,linux,python
 
 ### Linux ###
