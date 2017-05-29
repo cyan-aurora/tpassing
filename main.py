@@ -25,6 +25,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user, UserMixin
 from flask_principal import Principal, Identity, AnonymousIdentity, identity_changed, Permission, ActionNeed
 from wtforms import Form, StringField, PasswordField, TextAreaField, validators
+from flaskext.markdown import Markdown
 
 secure_config = configparser.ConfigParser()
 secure_config.read("secure.ini")
@@ -44,6 +45,8 @@ words = open("captcha-words.txt").read().splitlines()
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
+
+Markdown(app)
 
 ### CLASSES
 

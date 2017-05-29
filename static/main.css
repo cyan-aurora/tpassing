@@ -71,6 +71,11 @@ h1 a {
 	margin: 0 auto;
 }
 
+.user-entered {
+	background-color: #e6f2ff;
+	padding: 10px;
+}
+
 table {
 	width: 100%;
 	border-spacing: 0;
