@@ -212,8 +212,9 @@ def captcha_required(route):
 			return captcha_not_solved()
 	return check_captcha
 
-def captcha_not_solved():
-	to = request.path
+def captcha_not_solved(to=None):
+	if not to:
+		to = request.path
 	captcha_id = captcha.generate()
 	return render_template("captcha.html", captcha_id=captcha_id, to=to)
 
@@ -272,7 +273,7 @@ def solve_captcha():
 	if captcha.check(request.form["answer"]):
 		return redirect(request.form["to"])
 	else:
-		return captcha_not_solved()
+		return captcha_not_solved(request.form["to"])
 
 @app.route("/post/<post_id>")
 @login_required
