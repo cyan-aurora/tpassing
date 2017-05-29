@@ -3,6 +3,8 @@ Flask-Login==0.4.0
 Flask-Principal==0.4.0
 Flask-SQLAlchemy==2.2
 Flask-WTF==0.14.2
+Flask-Markdown==0.3
+markdown==2.6.8
 Jinja2==2.9.6
 MarkupSafe==1.0
 Pillow==4.1.1
