@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Delete all rows that have expired
 # Important inprod for security but not so much for a dev env
