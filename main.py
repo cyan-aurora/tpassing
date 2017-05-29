@@ -239,7 +239,7 @@ def browse():
 	# Kinda like how Google Drive does it
 	if current_user.is_authenticated:
 		number_posts = 15;
-		posts = Post.query.limit(15).all();
+		posts = Post.query.order_by(Post.created.desc()).limit(15).all();
 		return render_template("browse.html", posts=posts)
 	else:
 		return about()

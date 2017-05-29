@@ -28,7 +28,7 @@ a {
 
 .exit-floater {
 	position: fixed;
-	top: 75px;
+	top: 80px;
 	right: 20px;
 	padding: 20px;
 	background-color: #110310;
@@ -76,6 +76,10 @@ table {
 	border-spacing: 0;
 }
 
+tr {
+	cursor: pointer;
+}
+
 td {
 	padding: 10px;
 	text-align: center;
@@ -90,6 +94,11 @@ tr:nth-child(even) {
 }
 
 tr:first-child {
+	background-color: #1b97f0;
+	cursor: initial;
+}
+
+tr:hover {
 	background-color: #1b97f0;
 }
 

@@ -11,7 +11,7 @@
 				<td>date submitted</td>
 			</tr>
 		{% for post in posts %}
-			<tr>
+			<tr onclick="window.document.location='/post/{{ post.post_id }}';">
 				<td>
 					<a href="/post/{{ post.post_id }}">view</a>
 				</td>
