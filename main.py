@@ -253,7 +253,17 @@ def browse():
 @app.route("/captcha/<captcha_id>")
 def captcha_image(captcha_id):
 	if captcha.valid_id(captcha_id):
-		return captcha.generate_image()
+		# Add headers to both force latest IE rendering engine or Chrome Frame
+		# This is not for security. Security-wise caches are covered by
+		# captcha_id. This just makes sure a cached image isn't shown when it's
+		# been changed, for the user's experience
+		# Thanks to https://arusahni.net/blog/2014/03/flask-nocache.html
+		response = make_response(captcha.generate_image())
+		response.headers['Last-Modified'] = datetime.datetime.now()
+		response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+		response.headers['Pragma'] = 'no-cache'
+		response.headers['Expires'] = '-1'
+		return response
 	else:
 		return "tried to access an outdated captcha. should be " + str(session["captcha"]["image_id"]), 403
 
