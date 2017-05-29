@@ -324,6 +324,20 @@ def comment_on_post(post_id):
 	db.session.commit()
 	return redirect("/post/" + post_id)
 
+@app.route("/post/<post_id>/delete")
+@login_required
+@captcha_required
+def delete_post(post_id):
+	post = get_post(post_id)
+	if current_user.username == post.user:
+		db.session.delete(post)
+		db.session.commit()
+		# TODO: Flash
+		return redirect("/")
+	else:
+		# TODO: Better
+		return "It appears you are not the owner of this post, or you are not logged in."
+
 # So you can still access about when logged in
 @app.route("/about")
 def about():

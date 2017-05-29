@@ -6,7 +6,9 @@
 	<p>user: {{ post.user }}</p>
 	<p>target gender: {{ post.gender }}</p>
 	<div class="user-entered">{{ post.description|e|markdown }}</div>
-	<hr />
+	{% if current_user.username == post.user %}
+		<p><a href="/post/{{ post.post_id }}/delete">delete</a></p>
+	{% endif %}
 	<h2>comments</h2>
 	<form class="full-form" action="/post/{{ post.post_id }}/comment" method="post">
 		<p style="text-align: right;">comments accept <a href="https://en.support.wordpress.com/markdown-quick-reference/">markdown</a></p>
