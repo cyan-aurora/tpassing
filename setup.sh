@@ -21,5 +21,5 @@ echo "This will install the dummy secure config because the real one could not
 be transmitted."
 continue_prompt "mv dummy-secure.ini secure.ini"
 echo "This will set up the tables on the database you should have created."
-continue_prompt "python post-setup.py"
+continue_prompt "python database-setup.py"
 echo "Done! If this is inprod you will probably want to run setup-cron.sh"
