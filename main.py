@@ -154,15 +154,14 @@ class Post(db.Model):
 	gender      = db.Column(db.String(50))
 	description = db.Column(db.Text)
 	created     = db.Column(db.DateTime, default = db.func.current_timestamp())
-	expires     = db.Column(db.Interval, default = datetime.timedelta(30))
+	expires     = db.Column(db.DateTime)
 
-	def __init__(self, user, url, gender, description, expires):
+	def __init__(self, user, url, gender, description, days_to_expiration):
 		self.user = user
 		self.url = url
 		self.gender = gender
 		self.description = description
-		if expires:
-			self.expires = datetime.timedelta(int(expires))
+		self.expires = datetime.datetime.now() + datetime.timedelta(days=int(days_to_expiration))
 
 	def __repr__(self):
 		return "<Post %r at %r>" % (self.user, self.date)
@@ -325,7 +324,8 @@ def submission_page():
 				current_user.username,
 				form.url.data,
 				form.gender.data,
-				form.text.data
+				form.text.data,
+				form.expires.data
 				)
 		db.session.add(post)
 		db.session.commit()
