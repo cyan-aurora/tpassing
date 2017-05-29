@@ -75,34 +75,31 @@ h1 a {
 	background-color: #e6f2ff;
 	padding: 10px;
 }
+.original-poster {
+	color: #2471a8;
+}
 
 table {
 	width: 100%;
 	border-spacing: 0;
 }
-
 tr {
 	cursor: pointer;
 }
-
 td {
 	padding: 10px;
 	text-align: center;
 }
-
 tr:nth-child(odd) {
 	background-color: #74b1dc;
 }
-
 tr:nth-child(even) {
 	background-color: #72c0f7;
 }
-
 tr:first-child {
 	background-color: #1b97f0;
 	cursor: initial;
 }
-
 tr:hover {
 	background-color: #1b97f0;
 }
@@ -118,15 +115,12 @@ input {
 .login form {
 	display: inline;
 }
-	
 .login, .logout {
 	float: right;
 }
-
 .login input {
 	width: 200px;
 }
-
 .login input[type="submit"] {
 	width: auto;
 }
@@ -142,7 +136,18 @@ input {
 	margin-bottom: 20px;
 	width: 375px;
 }
-
 .big-form input[type="submit"] {
 	width: 400px;
+}
+
+.full-form {
+	width: 100%;
+}
+.full-form input, textarea {
+	display: block;
+	margin: 20px 0;
+	width: 100%;
+}
+.full-form textarea {
+	height: 80px;
 }

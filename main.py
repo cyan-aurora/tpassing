@@ -151,13 +151,14 @@ class User(db.Model, UserMixin):
 		return str(self.user_id)
 
 class Post(db.Model):
-	post_id     = db.Column(db.Integer, primary_key = True)
+	post_id     = db.Column(db.Integer, primary_key=True)
 	url         = db.Column(db.String(150))
 	user        = db.Column(db.String(100))
 	gender      = db.Column(db.String(50))
 	description = db.Column(db.Text)
-	created     = db.Column(db.DateTime, default = db.func.current_timestamp())
+	created     = db.Column(db.DateTime, default=db.func.current_timestamp())
 	expires     = db.Column(db.DateTime)
+	comments    = db.relationship("Comment", lazy="dynamic")
 
 	def __init__(self, user, url, gender, description, days_to_expiration):
 		self.user = user
@@ -167,7 +168,21 @@ class Post(db.Model):
 		self.expires = datetime.datetime.now() + datetime.timedelta(days=int(days_to_expiration))
 
 	def __repr__(self):
-		return "<Post %r at %r>" % (self.user, self.expires)
+		return "<Post %r by %r>" % (self.post_id, self.user)
+
+class Comment(db.Model):
+	comment_id = db.Column(db.Integer, primary_key=True)
+	post_id    = db.Column(db.Integer, db.ForeignKey("post.post_id"))
+	user       = db.Column(db.String(100))
+	created    = db.Column(db.DateTime, default=db.func.current_timestamp())
+	text       = db.Column(db.Text)
+
+	def __init__(self, user, text):
+		self.user = user
+		self.text = text
+
+	def __repr__(self):
+		return "<Comment %r by %r>" % (self.comment_id, self.user)
 
 class Login_Form(Form):
 	username = StringField("", [
@@ -284,7 +299,8 @@ def solve_captcha():
 def view_post(post_id):
 	post = get_post(post_id)
 	if post:
-		return render_template("post.html", post=post)
+		comments = post.comments.limit(100).all()
+		return render_template("post.html", post=post, comments=comments)
 	else:
 		return render_template("removed.html")
 
@@ -297,6 +313,16 @@ def view_link(post_id):
 		return redirect(post.url)
 	else:
 		return render_template("removed.html")
+
+@app.route("/post/<post_id>/comment", methods=["post"])
+@login_required
+@captcha_required
+def comment_on_post(post_id):
+	post = get_post(post_id)
+	comment = Comment(current_user.username, request.form["comment"])
+	post.comments.append(comment)
+	db.session.commit()
+	return redirect("/post/" + post_id)
 
 # So you can still access about when logged in
 @app.route("/about")

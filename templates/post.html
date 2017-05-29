@@ -6,5 +6,19 @@
 	<p>user: {{ post.user }}</p>
 	<p>target gender: {{ post.gender }}</p>
 	<div class="user-entered">{{ post.description|e|markdown }}</div>
+	<hr />
+	<h2>comments</h2>
+	<form class="full-form" action="/post/{{ post.post_id }}/comment" method="post">
+		<p style="text-align: right;">comments accept <a href="https://en.support.wordpress.com/markdown-quick-reference/">markdown</a></p>
+		<textarea name="comment" placeholder="leave a comment"></textarea>
+		<input type="submit" value="comment" />
+	</form>
+	{% for comment in comments %}
+		<span{% if comment.user == post.user %} class="original-poster"{% endif %}>
+			{{ comment.user }}
+		</span>
+		<div class="user-entered">{{ comment.text|e|markdown }}</div>
+		<br />
+	{% endfor %}
 </div>
 {% endblock %}

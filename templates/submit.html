@@ -1,22 +1,5 @@
 {% extends "standard.html" %}
 
-{% block head %}
-	{{ super() }}
-	<style>
-		.full-form {
-			width: 100%;
-		}
-		.full-form input, textarea {
-			display: block;
-			margin: 20px 0;
-			width: 100%;
-		}
-		.full-form textarea {
-			height: 80px;
-		}
-	</style>
-{% endblock %}
-
 {% block main %}
 	<div class="wrap">
 		<form class="full-form" action="/submit" method="post">
