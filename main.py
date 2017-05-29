@@ -218,7 +218,10 @@ def captcha_not_solved():
 	return render_template("captcha.html", captcha_id=captcha_id, to=to)
 
 def get_post(post_id):
-	return Post.query.filter_by(post_id=int(post_id)).first()
+	post = Post.query.filter_by(post_id=int(post_id)).first()
+	if post and post.expires > datetime.datetime.now():
+		return post
+	return None
 
 @app.context_processor
 def add_login_form():
@@ -239,7 +242,10 @@ def browse():
 	# Kinda like how Google Drive does it
 	if current_user.is_authenticated:
 		number_posts = 15;
-		posts = Post.query.order_by(Post.created.desc()).limit(15).all();
+		posts = (Post.query
+			.filter(Post.expires > datetime.datetime.now())
+			.order_by(Post.created.desc())
+			.limit(15).all())
 		return render_template("browse.html", posts=posts)
 	else:
 		return about()
@@ -263,15 +269,20 @@ def solve_captcha():
 @captcha_required
 def view_post(post_id):
 	post = get_post(post_id)
-	created = post.created
-	return render_template("post.html", post=post)
+	if post:
+		return render_template("post.html", post=post)
+	else:
+		return render_template("removed.html")
 
 @app.route("/post/<post_id>/link")
 @login_required
 @captcha_required
 def view_link(post_id):
 	post = get_post(post_id)
-	return redirect(post.url)
+	if post:
+		return redirect(post.url)
+	else:
+		return render_template("removed.html")
 
 # So you can still access about when logged in
 @app.route("/about")
