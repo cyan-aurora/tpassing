@@ -158,7 +158,7 @@ class Post(db.Model):
 	description = db.Column(db.Text)
 	created     = db.Column(db.DateTime, default=db.func.current_timestamp())
 	expires     = db.Column(db.DateTime)
-	comments    = db.relationship("Comment", lazy="dynamic", cascade="delete")
+	comments    = db.relationship("Comment", lazy="dynamic", cascade="all, delete")
 
 	def __init__(self, user, url, gender, description, days_to_expiration):
 		self.user = user
