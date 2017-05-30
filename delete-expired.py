@@ -10,8 +10,8 @@ import datetime
 q = Post.query.filter(Post.expires <= datetime.datetime.now())
 count = q.count()
 print(datetime.datetime.now(), end="> ")
-print("Found " + str(count) + " old entries.", end="")
-# Add this to make grepping easire
+print("Found " + str(count) + " expired entries", end="")
+# Add this to make grepping easier
 if count:
 	print(" | Deleted")
 else:

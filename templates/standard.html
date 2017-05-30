@@ -23,7 +23,9 @@
 	<div class="top-bar">
 		{% block top_bar %}
 			{% if current_user.is_authenticated %}
-				<a href="/logout" class="logout">log out</a>
+				<div class="logout">
+					<span>{{ current_user.username }} | </span><a href="/logout">log out</a>
+				</div>
 			{% else %}
 				<div class="login">
 					{% include "login-template.html" %}
