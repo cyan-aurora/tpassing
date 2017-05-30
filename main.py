@@ -176,6 +176,8 @@ class Comment(db.Model):
 	user       = db.Column(db.String(100))
 	created    = db.Column(db.DateTime, default=db.func.current_timestamp())
 	text       = db.Column(db.Text)
+	agrees     = db.Column(db.Integer, default=0)
+	disagrees  = db.Column(db.Integer, default=0)
 
 	def __init__(self, user, text):
 		self.user = user

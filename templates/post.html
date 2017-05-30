@@ -1,5 +1,32 @@
 {% extends "standard.html" %}
 
+{% block head %}
+	{{ super() }}
+	<script>
+		function vote(id, up, undo) {
+
+			var upDown = up ? "up" : "down";
+			var undoString = undo ? "/undo" : "";
+			var voteRequest = new XMLHttpRequest();
+			voteRequest.open("GET", "/comment/" + id.toString() + "/" + upDown + undoString);
+			voteRequest.send();
+
+			var count = document.getElementById(id.toString() + "-" + upDown);
+			count.innerHTML = parseInt(count.innerHTML) + (undo ? -1 : 1);
+
+			var link = document.getElementById(id.toString() + "-" + upDown + "-link");
+			if (undo) {
+				link.style.color = "#2471a8";
+			}
+			else {
+				link.style.color = "red"; // TODO: Pick a color
+			}
+			link.onclick = function() { vote(id, up, !undo); };
+
+		}
+	</script>
+{% endblock %}
+
 {% block main %}
 <div class="wrap">
 	<a href="/post/{{ post.post_id }}/link">link</a>
@@ -16,11 +43,17 @@
 		<input type="submit" value="comment" />
 	</form>
 	{% for comment in comments %}
-		<span{% if comment.user == post.user %} class="original-poster"{% endif %}>
-			{{ comment.user }}
-		</span>
-		<div class="user-entered">{{ comment.text|e|markdown }}</div>
-		<br />
+		<div style="margin: 20px 0;">
+			<span{% if comment.user == post.user %} class="original-poster"{% endif %}>
+				{{ comment.user }}
+			</span>
+			<div class="user-entered">{{ comment.text|e|markdown }}</div>
+			<span><span id="{{comment.comment_id}}-up">{{ comment.agrees }}</span> agree
+				(<a id="{{comment.comment_id}}-up-link" href="javascript:void(0);" onclick="vote({{comment.comment_id}}, true);">+1</a>)
+				| <span id="{{comment.comment_id}}-down">{{ comment.disagrees }}</span> disagree
+				(<a id="{{comment.comment_id}}-down-link" href="javascript:void(0);" onclick="vote({{comment.comment_id}}, false);">-1</a>)
+			</span>
+		</div>
 	{% endfor %}
 </div>
 {% endblock %}
