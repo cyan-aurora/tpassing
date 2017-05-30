@@ -10,6 +10,7 @@ MarkupSafe==1.0
 Pillow==4.1.1
 PyMySQL==0.7.11
 SQLAlchemy==1.1.10
+SQLAlchemy-Utils==0.32.14
 WTForms==2.1
 Werkzeug==0.12.2
 bcrypt==3.1.3

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 continue_prompt()
 {
@@ -12,14 +12,64 @@ continue_prompt()
   done
 }
 
-echo "This will set up a python virtualenv."
-continue_prompt "virtualenv -p python3 venv"
+# Check for python3
+if [ ! -x "$(command -v python3)" ]; then
+  echo "It looks like you don't have python3 installed."
+  echo "On debian-like systems, you can install with:"
+  echo "$ sudo apt-get install python3"
+  echo "You'll also want pip:"
+  echo "$ sudo apt-get install python3-pip"
+  echo "The installation will be impossible without python3"
+  continue_prompt 'echo "Continuing!"' exit
+fi
+
+# Check for an installed virtual environment
+if [ ! -d "venv" ]; then
+
+  if [ ! -x "$(command -v virtualenv)" ]; then
+    echo "It looks like you don't have virtualenv installed. Install it? (Requires sudo)"
+    continue_prompt "sudo pip install virtualenv" exit
+  fi
+
+  # No reason to ask; at the worst they `rm -r` venv
+  echo "Setting up a virtual environment..."
+  virtualenv -p python3 venv
+  echo
+
+fi
+
+# Safe if activated twice
+echo "Activating virtual environment."
 . venv/bin/activate
-echo "This will install the requirements."
+echo
+
+echo "This will install the requirements for the website."
 continue_prompt "pip3 install -r requirements.txt"
-echo "This will install the dummy secure config because the real one could not
-be transmitted."
-continue_prompt "mv dummy-secure.ini secure.ini"
-echo "This will set up the tables on the database you should have created."
-continue_prompt "python database-setup.py"
-echo "Done! If this is inprod you will probably want to run setup-cron.sh"
+echo
+
+echo "You should have installed mysql. You'll need to enter your password so
+the website can access it. Enter nothing to skip this step."
+echo -n "Password: "
+stty -echo
+read password
+stty echo
+echo
+if [ ! -z "$password" ]; then
+  # If they entered a password they surely want to move the dummy. If they
+  # haven't what's the point? So no need for confirmation; we can safely put
+  # this here.
+  # secure.ini is in .gitignore so it's safe
+  cp dummy-secure.ini secure.ini
+  # Replace spaces with %20 (url-encode). We escape the % for both INI format
+  # and sh, resulting in 4:1 ratio
+  escaped_password=${password// /%%%%20}
+  printf "\n[SQL]\npassword=$escaped_password\n" >> secure.ini
+else
+  echo "Skipping, but the rest of setup requires a password to be entered in secure.ini"
+fi
+echo
+
+python setup-database.py
+echo
+
+echo "Done!"

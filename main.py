@@ -7,7 +7,7 @@
 import sys
 
 if sys.version_info < (3, 0):
-	sys.stdout.write("Run with python 3 please.")
+	sys.stdout.write("Run with python 3 please. Are you in your virtualenv?")
 	sys.exit(1)
 
 import bcrypt
