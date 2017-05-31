@@ -17,9 +17,9 @@
 			var notUpDown = up ? "down" : "up";
 
 			// Make a request to the website that indicates a vote
-			var undoString = undo ? "/undo" : "";
 			var voteRequest = new XMLHttpRequest();
-			voteRequest.open("GET", "/comment/" + id.toString() + "/" + upDown + undoString);
+			var undoString = undo ? "true" : "false"; // Default, but explicit is nice
+			voteRequest.open("GET", "/comment/" + id.toString() + "/vote?vote=" + upDown);
 			voteRequest.send();
 
 			// For manipulating the counts and links
