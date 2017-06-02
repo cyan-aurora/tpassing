@@ -135,6 +135,11 @@ class User(db.Model, UserMixin):
 	def __repr__(self):
 		return "<User %r>" % self.username
 
+	@classmethod
+	def get_by_name(cls, name):
+		user = User.query.filter_by(username=name).first()
+		return user
+
 	def init_login(self):
 		pass # TODO: Remove?
 
@@ -170,6 +175,13 @@ class Post(db.Model):
 	def __repr__(self):
 		return "<Post %r by %r>" % (self.post_id, self.user)
 
+	@classmethod
+	def get_by_id(cls, post_id):
+		post = cls.query.filter_by(post_id=int(post_id)).first()
+		if post and post.expires > datetime.datetime.now():
+			return post
+		return None
+
 class Comment(db.Model):
 	comment_id = db.Column(db.Integer, primary_key=True)
 	post_id    = db.Column(db.Integer, db.ForeignKey("post.post_id"))
@@ -185,7 +197,13 @@ class Comment(db.Model):
 		self.text = text
 
 	def __repr__(self):
-		return "<Comment %r by %r>" % (self.comment_id, self.user)
+		return "<Comment %r by %r>" % (self.item_on_id, self.user)
+
+	@classmethod
+	def get_by_id(cls, comment_id):
+		comment = cls.query.filter_by(comment_id=int(comment_id)).first()
+		# TODO: Check for expiration?
+		return comment
 
 class Vote(db.Model):
 	# Though all other fields will never be the same, each one could be duplicate
@@ -207,6 +225,19 @@ class Vote(db.Model):
 	
 	def __repr__(self):
 		return "<Vote on %r by %r>" % (item_on_id, user_id)
+
+	@classmethod
+	def get(cls, item_on_id, user_id):
+		# A user can only have one vote_type on an item
+		vote_query = cls.query.filter_by(
+				item_on_id=int(item_on_id),
+				user_id=int(user_id)
+				)
+		return vote_query.first() # Guaranteed to only be one
+
+class Comment_Vote(Vote):
+	def __repr__(self):
+		return "<Comment Vote on %r by %r>" % (item_on_id, user_id)
 
 class Login_Form(Form):
 	username = StringField("", [
@@ -259,12 +290,6 @@ def captcha_not_solved(to=None):
 		to = request.path
 	captcha_id = captcha.generate()
 	return render_template("captcha.html", captcha_id=captcha_id, to=to)
-
-def get_post(post_id):
-	post = Post.query.filter_by(post_id=int(post_id)).first()
-	if post and post.expires > datetime.datetime.now():
-		return post
-	return None
 
 @app.context_processor
 def add_login_form():
@@ -321,7 +346,7 @@ def solve_captcha():
 @login_required
 @captcha_required
 def view_post(post_id):
-	post = get_post(post_id)
+	post = Post.get_by_id(post_id)
 	if post:
 		comments = post.comments.limit(100).all()
 		return render_template("post.html", post=post, comments=comments)
@@ -332,7 +357,7 @@ def view_post(post_id):
 @login_required
 @captcha_required
 def view_link(post_id):
-	post = get_post(post_id)
+	post = Post.get_by_id(post_id)
 	if post:
 		return redirect(post.url)
 	else:
@@ -342,7 +367,7 @@ def view_link(post_id):
 @login_required
 @captcha_required
 def comment_on_post(post_id):
-	post = get_post(post_id)
+	post = Post.get_by_id(post_id)
 	comment = Comment(current_user.username, request.form["comment"])
 	post.comments.append(comment)
 	db.session.commit()
@@ -352,7 +377,7 @@ def comment_on_post(post_id):
 @login_required
 @captcha_required
 def delete_post(post_id):
-	post = get_post(post_id)
+	post = Post.get_by_id(post_id)
 	if current_user.username == post.user:
 		db.session.delete(post)
 		db.session.commit()
