@@ -167,11 +167,11 @@ class Post(db.Model):
 	comments    = db.relationship("Comment", lazy="dynamic", cascade="all, delete")
 
 	def __init__(self, user, url, gender, description, days_to_expiration):
-		self.user = user
-		self.url = url
-		self.gender = gender
+		self.user        = user
+		self.url         = url
+		self.gender      = gender
 		self.description = description
-		self.expires = datetime.datetime.now() + datetime.timedelta(days=int(days_to_expiration))
+		self.expires     = datetime.datetime.now() + datetime.timedelta(days = int(days_to_expiration))
 
 	def __repr__(self):
 		return "<Post %r by %r>" % (self.post_id, self.user)
@@ -304,6 +304,22 @@ def load_user(user_id_string):
 	user = User.query.filter_by(user_id=int(user_id_string)).first()
 	user.init_login()
 	return user
+
+@app.context_processor
+def utility_processor():
+	def count_comment_votes(comment, vote_type_string):
+		vote_type = 0
+		if vote_type_string == "down":
+			vote_type = 0
+		elif vote_type_string == "up":
+			vote_type = 1
+		else:
+			return 'error: vote_type_string not "down" or "up"'
+		query = Comment_Vote.query.filter_by(item_on_id=comment.comment_id, vote_type=vote_type)
+		return query.count()
+	return {
+		"count_comment_votes": count_comment_votes
+	}
 
 ### ROUTES
 
