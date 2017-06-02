@@ -15,6 +15,7 @@ import logging
 import configparser
 import time
 import datetime
+import json
 from functools import wraps
 from random import SystemRandom
 
@@ -188,9 +189,9 @@ class Comment(db.Model):
 	user       = db.Column(db.String(100))
 	created    = db.Column(db.DateTime, default=db.func.current_timestamp())
 	text       = db.Column(db.Text)
-	agrees     = db.Column(db.Integer, default=0)
-	disagrees  = db.Column(db.Integer, default=0)
-	votes      = db.relationship("Comment", lazy="dynamic", cascade="all, delete")
+	# agrees     = db.Column(db.Integer, default=0)
+	# disagrees  = db.Column(db.Integer, default=0)
+	#votes      = db.relationship("Comment", lazy="dynamic", cascade="all, delete")
 
 	def __init__(self, user, text):
 		self.user = user
@@ -208,20 +209,23 @@ class Comment(db.Model):
 class Vote(db.Model):
 	# Though all other fields will never be the same, each one could be duplicate
 	vote_id = db.Column(db.Integer, primary_key = True)
-	# Post vs Comment
+	# TODO: Needed??
 	item_type = db.Column(db.Integer)
 	# id of the post or comment it's on
 	item_on_id = db.Column(db.Integer)
+	# id of user who created item voted on
+	item_user_id = db.Column(db.Integer)
 	# User who performed vote
 	user_id = db.Column(db.Integer)
-	# 0 is down, 1 is up. Integer for scalability (3 in some cases)
+	# 0 is down, 1 is up. Integer for scalability
 	vote_type = db.Column(db.Integer)
 
-	def __init__(self, item_type, item_on_id, vote_type):
-		self.item_type  = item_type
-		self.item_on_id = item_on_id
-		self.vote_type  = vote_type
-		self.user_id    = current_user.user_id
+	def __init__(self, item_on_id, item_user_id, vote_type):
+		# self.item_type  = item_type
+		self.item_on_id = int(item_on_id)
+		self.item_user_id = int(item_user_id)
+		self.vote_type  = int(vote_type)
+		self.user_id    = int(current_user.user_id)
 	
 	def __repr__(self):
 		return "<Vote on %r by %r>" % (item_on_id, user_id)
@@ -387,13 +391,38 @@ def delete_post(post_id):
 		# TODO: Better
 		return "It appears you are not the owner of this post, or you are not logged in."
 
-@app.route("/post/<comment_id>/vote")
+@app.route("/comment/<comment_id>/vote")
 @login_required
-@captcha_required
 def vote_on_comment(comment_id):
-	up_down = request.args.get("vote");
-	if up_down == "up":
-		return "true";
+	up_down = request.args.get("vote")
+	comment = Comment.get_by_id(comment_id)
+	username = comment.user
+	user = User.get_by_name(username)
+	rv = {}
+	if up_down == "down":
+		vote_type = 0
+	elif up_down == "up":
+		vote_type = 1
+	else:
+		rv["error"] = "vote not recognized"
+		return rv
+	vote = Comment_Vote.get(comment_id, user.user_id)
+	if vote:
+		if vote.vote_type == vote_type:
+			# Undoing a previously done vote
+			db.session.delete(vote)
+			rv["performed"] = "undo"
+		else:
+			# A vote of another type was previously made
+			# Modify its vote type
+			vote.vote_type = vote_type
+			rv["performed"] = "switch"
+	else:
+		vote = Comment_Vote(comment_id, user.user_id, vote_type)
+		db.session.add(vote)
+		rv["performed"] = "vote"
+	db.session.commit()
+	return json.dumps(rv)
 
 # So you can still access about when logged in
 @app.route("/about")
