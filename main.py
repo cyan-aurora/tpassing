@@ -442,10 +442,26 @@ def vote_on_comment(comment_id):
 			vote.vote_type = vote_type
 			rv["performed"] = "switch"
 	else:
-		vote = Comment_Vote(comment_id, user.user_id, vote_type)
+		vote = Comment_Vote(comment_id, current_user.user_id, vote_type)
 		db.session.add(vote)
 		rv["performed"] = "vote"
 	db.session.commit()
+	return json.dumps(rv)
+
+@app.route("/post/<post_id>/comments/votes")
+@login_required
+def get_comment_votes(post_id):
+	rv = {}
+	votes = db.session.query(Comment.comment_id, Comment_Vote.vote_type)\
+		.join(Comment_Vote, Comment_Vote.item_on_id == Comment.comment_id)\
+		.filter(Comment_Vote.user_id == current_user.user_id)\
+		.all()
+	rv["votes"] = []
+	for vote in votes:
+		vote_dict = {}
+		rv["votes"].append(vote_dict)
+		vote_dict["comment_id"] = vote[0]
+		vote_dict["type"] = Comment_Vote.vote_type_to_string(vote[1])
 	return json.dumps(rv)
 
 # So you can still access about when logged in

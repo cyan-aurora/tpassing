@@ -6,17 +6,35 @@
 
 		// TODO: Make this not horribly ugly code
 
-		upvoted = {};
+		voted = {};
+
+		function checkVotes() {
+
+			response = JSON.parse(this.responseText);
+			votes = response.votes;
+			for (var i=0; i<votes.length; i++) {
+				var vote = votes[i];
+				voteStatus(vote["comment_id"].toString(), vote["type"] == "up", false);
+				// Display somehow
+			}
+
+		}
+
+		function loadVotes() {
+
+			var request = new XMLHttpRequest();
+			request.addEventListener("load", checkVotes);
+			request.open("GET", "/post/{{ post.post_id }}/comments/votes");
+			request.send();
+
+		}
 
 		function vote(id, up, undo) {
 
-			var votedColor = "#a222a5";
-			var unvotedColor = "#2471a8";
-
+			// Make a request to the website that indicates a vote
 			var upDown = up ? "up" : "down";
 			var notUpDown = up ? "down" : "up";
 
-			// Make a request to the website that indicates a vote
 			var voteRequest = new XMLHttpRequest();
 			var undoString = undo ? "true" : "false"; // Default, but explicit is nice
 			voteRequest.open("GET", "/comment/" + id.toString() + "/vote?vote=" + upDown);
@@ -27,13 +45,35 @@
 			var otherFullId = id.toString() + "-" + notUpDown;
 			var count = document.getElementById(fullId);
 			var otherCount = document.getElementById(otherFullId);
-			var link = document.getElementById(fullId + "-link");
-			var otherLink = document.getElementById(otherFullId + "-link");
 
-			// Remember the vote for use when undoing
-			upvoted[fullId] = !undo;
+			voteStatus(id, up, undo);
+
 			// Change the displayed count
 			count.innerHTML = parseInt(count.innerHTML) + (undo ? -1 : 1);
+
+			// If the other one has been voted, cancel it
+			if (voted[otherFullId]) {
+				// Display the right color
+				voteStatus(id, !up, true);
+				// Decrease the count for the other side
+				otherCount.innerHTML = parseInt(otherCount.innerHTML) - 1;
+			}
+
+		}
+
+		function voteStatus(id, up, undo) {
+
+			var votedColor = "#a222a5";
+			var unvotedColor = "#2471a8";
+
+			var upDown = up ? "up" : "down";
+
+			// For manipulating the counts and links
+			var fullId = id.toString() + "-" + upDown;
+			var link = document.getElementById(fullId + "-link");
+
+			// Remember the vote for use when undoing
+			voted[fullId] = !undo;
 			// Color the link according to vote
 			if (undo) {
 				link.style.color = unvotedColor;
@@ -44,19 +84,10 @@
 			// Make clicking the vote undo what we just did, whether that's re-voting or undoing
 			link.onclick = function() { vote(id, up, !undo); };
 
-			// If the other one has been voted, cancel it
-			if (upvoted[otherFullId]) {
-				// Decrease the count for the other side
-				otherCount.innerHTML = parseInt(otherCount.innerHTML) - 1;
-				// Change the color to unvoted
-				otherLink.style.color = unvotedColor;
-				// Make the link to vote instead of undo
-				otherLink.onclick = function() { vote(id, !up, false); };
-				// Forget that we upvoted it
-				upvoted[otherFullId] = false;
-			}
-
 		}
+
+		window.addEventListener("load", loadVotes);
+
 	</script>
 {% endblock %}
 
