@@ -24,7 +24,7 @@ The website is built in Python 3 with [Flask](http://flask.pocoo.org/) and
 
 ## Setting up a development environment:
 
-**TLDR**: Install mysql/python3. Clone repo and run `setup.sh`. Run `init.sh`
+**TLDR**: Install mysql/python3. Clone repo and run `setup.sh`. Run `init`
 and load `localhost:5000`.
 
 The build tools should work on Linux and Mac. If you're running Windows you'll
@@ -49,7 +49,7 @@ everything you need. In general you can answer `y` to everything.
 
 Finally, you can start the debug server.
 
-	$ ./init.sh
+	$ ./init
 
 Then load up `localhost:5000` in a browser.
 
