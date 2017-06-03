@@ -189,9 +189,6 @@ class Comment(db.Model):
 	user       = db.Column(db.String(100))
 	created    = db.Column(db.DateTime, default=db.func.current_timestamp())
 	text       = db.Column(db.Text)
-	# agrees     = db.Column(db.Integer, default=0)
-	# disagrees  = db.Column(db.Integer, default=0)
-	#votes      = db.relationship("Comment", lazy="dynamic", cascade="all, delete")
 
 	def __init__(self, user, text):
 		self.user = user
@@ -455,6 +452,7 @@ def get_comment_votes(post_id):
 	votes = db.session.query(Comment.comment_id, Comment_Vote.vote_type)\
 		.join(Comment_Vote, Comment_Vote.item_on_id == Comment.comment_id)\
 		.filter(Comment_Vote.user_id == current_user.user_id)\
+		.filter(Comment.post_id == int(post_id))\
 		.all()
 	rv["votes"] = []
 	for vote in votes:
