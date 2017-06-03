@@ -112,9 +112,9 @@
 				{{ comment.user }}
 			</span>
 			<div class="user-entered">{{ comment.text|e|markdown }}</div>
-			<span><span id="{{comment.comment_id}}-up">{{ count_comment_votes(comment, "up") }}</span> agree
+			<span><span id="{{comment.comment_id}}-up">{{ comment_votes(comment, "up") }}</span> agree
 				(<a id="{{comment.comment_id}}-up-link" href="javascript:void(0);" onclick="vote({{comment.comment_id}}, true);">+1</a>)
-				| <span id="{{comment.comment_id}}-down">{{ count_comment_votes(comment, "down") }}</span> disagree
+				| <span id="{{comment.comment_id}}-down">{{ comment_votes(comment, "down") }}</span> disagree
 				(<a id="{{comment.comment_id}}-down-link" href="javascript:void(0);" onclick="vote({{comment.comment_id}}, false);">-1</a>)
 			</span>
 		</div>

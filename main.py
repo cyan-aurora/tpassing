@@ -328,7 +328,7 @@ def utility_processor():
 		query = Comment_Vote.query.filter_by(item_on_id=comment.comment_id, vote_type=vote_type)
 		return query.count()
 	return {
-		"count_comment_votes": count_comment_votes
+		"comment_votes": comment_votes
 	}
 
 ### ROUTES
