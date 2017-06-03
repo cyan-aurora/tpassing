@@ -212,21 +212,21 @@ class Vote(db.Model):
 	# TODO: Needed??
 	item_type = db.Column(db.Integer)
 	# id of the post or comment it's on
-	item_on_id = db.Column(db.Integer)
+	item_on_id = db.Column(db.Integer) # It's a foreignkey but can't specify because
 	# id of user who created item voted on
-	item_user_id = db.Column(db.Integer)
+	item_user_id = db.Column(db.Integer, db.ForeignKey("user.user_id")) # TODO: Needed?
 	# User who performed vote
-	user_id = db.Column(db.Integer)
+	user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"))
 	# 0 is down, 1 is up. Integer for scalability
 	vote_type = db.Column(db.Integer)
 
 	def __init__(self, item_on_id, item_user_id, vote_type):
 		# self.item_type  = item_type
 		self.item_on_id = int(item_on_id)
-		self.item_user_id = int(item_user_id)
+		self.item_user_id = int(item_user_id) # TODO: Need? Karma should need
 		self.vote_type  = int(vote_type)
 		self.user_id    = int(current_user.user_id)
-	
+
 	def __repr__(self):
 		return "<Vote on %r by %r>" % (item_on_id, user_id)
 
