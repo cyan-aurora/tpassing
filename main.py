@@ -240,6 +240,22 @@ class Vote(db.Model):
 		return vote_query.first() # Guaranteed to only be one
 
 class Comment_Vote(Vote):
+	@staticmethod
+	def vote_type_to_string(vote_type):
+		if vote_type == 0:
+			return "down"
+		else:
+			return "up"
+	@staticmethod
+	def string_to_vote_type(vote_type):
+		if vote_type == "down":
+			return 0
+		else:
+			return 1
+	def get_string_vote_type(self):
+		return self.vote_type_to_string(self.vote_type)
+	def set_string_vote_type(self, string_vote_type): # TODO: Remove?
+		self.vote_type = self.string_vote_type(string_vote_type)
 	def __repr__(self):
 		return "<Comment Vote on %r by %r>" % (item_on_id, user_id)
 
@@ -307,14 +323,8 @@ def load_user(user_id_string):
 
 @app.context_processor
 def utility_processor():
-	def count_comment_votes(comment, vote_type_string):
-		vote_type = 0
-		if vote_type_string == "down":
-			vote_type = 0
-		elif vote_type_string == "up":
-			vote_type = 1
-		else:
-			return 'error: vote_type_string not "down" or "up"'
+	def comment_votes(comment, vote_type_string):
+		vote_type = Comment_Vote.string_to_vote_type(vote_type_string)
 		query = Comment_Vote.query.filter_by(item_on_id=comment.comment_id, vote_type=vote_type)
 		return query.count()
 	return {
