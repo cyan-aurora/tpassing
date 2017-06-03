@@ -422,8 +422,6 @@ def delete_post(post_id):
 def vote_on_comment(comment_id):
 	up_down = request.args.get("vote")
 	comment = Comment.get_by_id(comment_id)
-	username = comment.user
-	user = User.get_by_name(username)
 	rv = {}
 	if up_down == "down":
 		vote_type = 0
@@ -432,7 +430,7 @@ def vote_on_comment(comment_id):
 	else:
 		rv["error"] = "vote not recognized"
 		return rv
-	vote = Comment_Vote.get(comment_id, user.user_id)
+	vote = Comment_Vote.get(comment_id, current_user.user_id)
 	if vote:
 		if vote.vote_type == vote_type:
 			# Undoing a previously done vote
