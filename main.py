@@ -204,20 +204,19 @@ class Comment(db.Model):
 		return comment
 
 class Vote(db.Model):
+	__tablename__ = "vote_null"
 	# Though all other fields will never be the same, each one could be duplicate
 	vote_id = db.Column(db.Integer, primary_key = True)
 	# TODO: Needed??
-	item_type = db.Column(db.Integer)
+	item_type = db.Column(db.Enum(["up", "down"])
 	# id of the post or comment it's on
 	item_on_id = db.Column(db.Integer) # It's a foreignkey but can't specify because
-	# id of user who created item voted on
-	item_user_id = db.Column(db.Integer, db.ForeignKey("user.user_id")) # TODO: Needed?
 	# User who performed vote
 	user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"))
 	# 0 is down, 1 is up. Integer for scalability
 	vote_type = db.Column(db.Integer)
 
-	def __init__(self, item_on_id, item_user_id, vote_type):
+	def __init__(self, item_type, item_on_id, item_user_id, vote_type):
 		# self.item_type  = item_type
 		self.item_on_id = int(item_on_id)
 		self.item_user_id = int(item_user_id) # TODO: Need? Karma should need
@@ -236,25 +235,56 @@ class Vote(db.Model):
 				)
 		return vote_query.first() # Guaranteed to only be one
 
+	@classmethod
+	def vote(cls, item_id, vote_type):
+		vote = cls.get(item_id, current_user.user_id)
+		rv = ""
+		if vote:
+			if vote.vote_type == vote_type:
+				# Undoing a previously done vote
+				db.session.delete(vote)
+				rv = "undo"
+			else:
+				# A vote of another type was previously made
+				# Modify its vote type
+				vote.vote_type = vote_type
+				rv = "switch"
+		else:
+			vote = cls(item_id, current_user.user_id, vote_type)
+			db.session.add(vote)
+			rv = "vote"
+		db.session.commit()
+		return rv
+
 class Comment_Vote(Vote):
-	@staticmethod
-	def vote_type_to_string(vote_type):
-		if vote_type == 0:
-			return "down"
-		else:
-			return "up"
-	@staticmethod
-	def string_to_vote_type(vote_type):
-		if vote_type == "down":
-			return 0
-		else:
-			return 1
-	def get_string_vote_type(self):
-		return self.vote_type_to_string(self.vote_type)
-	def set_string_vote_type(self, string_vote_type): # TODO: Remove?
-		self.vote_type = self.string_vote_type(string_vote_type)
+	__tablename__ = "comment_vote_null"
+
+	@classmethod
+	def count_on_comment(cls, comment, vote_type_string):
+		vote_type = cls.string_to_vote_type(vote_type_string)
+		query = cls.query.filter_by(item_on_id=comment.comment_id, vote_type=vote_type)
+		return query.count()
+
+	@classmethod
+	def get_comment_votes(cls, post_id):
+		votes = db.session.query(Comment.comment_id, cls.vote_type)\
+			.join(cls, cls.item_on_id == Comment.comment_id)\
+			.filter(cls.user_id == current_user.user_id)\
+			.filter(Comment.post_id == int(post_id))\
+			.all()
+		return votes
 	def __repr__(self):
 		return "<Comment Vote on %r by %r>" % (item_on_id, user_id)
+
+class Comment_Agreement_Vote(Comment_Vote):
+	__tablename__ = "comment_agreement_vote"
+	def __repr__(self):
+		return "<Comment Agreement Vote on %r>" % item_on_id
+
+class Comment_Quality_Vote(Comment_Vote):
+	__tablename__ = "comment_agreement_vote"
+	def __repr__(self):
+		return "<Comment Quality Vote on %r>" % item_on_id
 
 class Login_Form(Form):
 	username = StringField("", [
@@ -320,12 +350,9 @@ def load_user(user_id_string):
 
 @app.context_processor
 def utility_processor():
-	def comment_votes(comment, vote_type_string):
-		vote_type = Comment_Vote.string_to_vote_type(vote_type_string)
-		query = Comment_Vote.query.filter_by(item_on_id=comment.comment_id, vote_type=vote_type)
-		return query.count()
 	return {
-		"comment_votes": comment_votes
+		"comment_votes": Comment_Agreement_Vote.count_on_comment,
+		"comment_quality_votes": Comment_Quality_Vote.count_on_comment,
 	}
 
 ### ROUTES
@@ -418,48 +445,28 @@ def delete_post(post_id):
 @login_required
 def vote_on_comment(comment_id):
 	up_down = request.args.get("vote")
-	comment = Comment.get_by_id(comment_id)
 	rv = {}
-	if up_down == "down":
-		vote_type = 0
-	elif up_down == "up":
-		vote_type = 1
-	else:
-		rv["error"] = "vote not recognized"
-		return rv
-	vote = Comment_Vote.get(comment_id, current_user.user_id)
-	if vote:
-		if vote.vote_type == vote_type:
-			# Undoing a previously done vote
-			db.session.delete(vote)
-			rv["performed"] = "undo"
-		else:
-			# A vote of another type was previously made
-			# Modify its vote type
-			vote.vote_type = vote_type
-			rv["performed"] = "switch"
-	else:
-		vote = Comment_Vote(comment_id, current_user.user_id, vote_type)
-		db.session.add(vote)
-		rv["performed"] = "vote"
-	db.session.commit()
+	vote_type = Comment_Vote.string_to_vote_type(up_down)
+	cls = Comment_Agreement_Vote
+	if request.args.get("quality") == "true":
+		cls = Comment_Quality_Vote
+	rv["performed"] = cls.vote(comment_id, vote_type)
 	return json.dumps(rv)
 
 @app.route("/post/<post_id>/comments/votes")
 @login_required
-def get_comment_votes(post_id):
-	rv = {}
-	votes = db.session.query(Comment.comment_id, Comment_Vote.vote_type)\
-		.join(Comment_Vote, Comment_Vote.item_on_id == Comment.comment_id)\
-		.filter(Comment_Vote.user_id == current_user.user_id)\
-		.filter(Comment.post_id == int(post_id))\
-		.all()
-	rv["votes"] = []
-	for vote in votes:
-		vote_dict = {}
-		rv["votes"].append(vote_dict)
-		vote_dict["comment_id"] = vote[0]
-		vote_dict["type"] = Comment_Vote.vote_type_to_string(vote[1])
+def send_comment_votes(post_id):
+	rv = {
+		"agreement_votes" : Comment_Agreement_Vote.get_comment_votes(post_id),
+		"quality_votes" : Comment_Quality_Vote.get_comment_votes(post_id)
+		}
+	print(rv)
+	for vote_class, votes in rv.items():
+		for i, vote in enumerate(votes):
+			vote_dict = {}
+			rv[vote_class][i] = vote_dict
+			vote_dict["comment_id"] = vote[0]
+			vote_dict["type"] = Comment_Vote.vote_type_to_string(vote[1])
 	return json.dumps(rv)
 
 # So you can still access about when logged in
