@@ -276,7 +276,7 @@ class Login_Form(Form):
 	], render_kw={"placeholder": "username"})
 	password = PasswordField("", [
 		validators.DataRequired(),
-		validators.Length(min=6, max=60)
+		validators.Length(min=10, max=60)
 	], render_kw={"placeholder": "password"})
 
 class Submit_Form(Form):
