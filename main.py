@@ -348,7 +348,7 @@ def browse():
 		posts = (Post.query
 			.filter(Post.expires > datetime.datetime.now())
 			.order_by(Post.created.desc())
-			.limit(15).all())
+			.all())
 		return render_template("browse.html", posts=posts)
 	else:
 		return about()
