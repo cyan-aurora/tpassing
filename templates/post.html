@@ -14,7 +14,7 @@
 			votes = response.votes;
 			for (var i=0; i<votes.length; i++) {
 				var vote = votes[i];
-				voteStatus(vote["comment_id"].toString(), vote["type"] == "up", false);
+				voteStatus(vote["comment_id"].toString(), vote["value"] == "up", vote["type"] == "quality", false);
 				// Display somehow
 			}
 

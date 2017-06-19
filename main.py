@@ -260,12 +260,11 @@ class Vote(db.Model):
 		return query.count()
 
 	@classmethod
-	def get_post_comment_votes(cls, post_id, vote_type):
-		votes = db.session.query(Comment.comment_id, cls.vote_type)\
+	def get_post_comment_votes(cls, post_id):
+		votes = db.session.query(Comment.comment_id, cls.vote_type, cls.vote_value)\
 			.join(cls, cls.item_on_id == Comment.comment_id)\
 			.filter(cls.user_id == current_user.user_id)\
 			.filter(Comment.post_id == int(post_id))\
-			.filter(cls.vote_type == vote_type)\
 			.all()
 		return votes
 
@@ -435,17 +434,14 @@ def vote_on_comment(comment_id):
 @app.route("/post/<post_id>/comments/votes")
 @login_required
 def send_comment_votes(post_id):
-	rv = {
-		"agreement_votes" : Vote.get_post_comment_votes(post_id, "comment-agree"),
-		"quality_votes" : Vote.get_post_comment_votes(post_id, "comment-quality")
-		}
-	print(rv)
-	for vote_class, votes in rv.items():
-		for i, vote in enumerate(votes):
-			vote_dict = {}
-			rv[vote_class][i] = vote_dict
-			vote_dict["comment_id"] = vote[0]
-			vote_dict["type"] = vote[1]
+	votes = Vote.get_post_comment_votes(post_id)
+	rv = { "votes" : [] }
+	for i, vote in enumerate(votes):
+		vote_dict = {}
+		rv["votes"].append(vote_dict)
+		vote_dict["comment_id"] = vote[0]
+		vote_dict["type"]       = vote[1].replace("comment-", "")
+		vote_dict["value"]      = vote[2]
 	return json.dumps(rv)
 
 # So you can still access about when logged in
