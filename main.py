@@ -49,57 +49,51 @@ login_manager.login_view = "login"
 
 Markdown(app)
 
+### NON-ROUTE FUNCTIONS (library functions)
+
+# Used in WTForms to validate captcha
+def check_captcha(form, field):
+	if not captcha.check(field.data):
+		raise ValidationError("CAPTCHA is incorrect")
+
+@app.context_processor
+def add_login_form():
+	return { "login_form" : Login_Form(request.form) }
+
+@login_manager.user_loader
+def load_user(user_id_string):
+	user = User.query.filter_by(user_id=int(user_id_string)).first()
+	user.init_login()
+	return user
+
+@app.context_processor
+def utility_processor():
+	return {
+		"comment_votes": Vote.count_on_comment
+	}
+
 ### CLASSES
 
-class CaptchaManager():
+class Captcha_Manager():
 
 	def bind_session(self):
 		if not "captcha" in session:
 			# Captcha manager's data has not yet been put on the session
 			session["captcha"] = {}
 			self.data = session["captcha"]
-			self.data["last_needed"] = 0
-			self.data["solved"] = False
-			self.data["image_id"] = 0
 			self.data["answer"] = ""
-			self.data["number_needed"] = 0
 		else:
 			# Reference self.data to the session for convenience
 			self.data = session["captcha"]
 
-	# Check if there has been a recent enough request to warrant requesting a captcha
-	# Only needed() calls are counted as bona fide requests
-	def needed(self):
-		self.bind_session()
-		if self.data["solved"]:
-			# A captcha has been solved and not been used yet
-			self.data["solved"] = False
-			session.modified = True
-			return False
-		if self.data["last_needed"] == 0:
-			self.data["last_needed"] = time.time()
-			return True
-		self.data["number_needed"] += 1
-		session.modified = True
-		captcha_base_time = config.getint("Captcha", "base_wait_time")
-		captcha_time = captcha_base_time * 2 ** self.data["number_needed"]
-		if time.time() < self.data["last_needed"] + captcha_time:
-			# The last request was too recent, require a captcha
-			return True
-		self.data["last_needed"] = time.time() # It counts as a "solution" to not need it
-		session.modified = True
-		return False
-
 	# Merely check if an answer matches the last given captcha
 	def check(self, given_answer):
 		self.bind_session()
+		rv = False
 		if self.data["answer"] == given_answer:
-			# Since they could just refresh their session every time anyway, we make the users lives easier
-			self.data["number_needed"] = 0
-			self.data["solved"] = True
-			session.modified = True
-			return True
-		return False
+			rv = True
+		self.generate()
+		return rv
 
 	# Generate a captcha, return ID (used in url) of image
 	def generate(self):
@@ -107,22 +101,15 @@ class CaptchaManager():
 		number_words = config.getint("Captcha", "num_words")
 		phrase = " ".join([words[generator.randrange(len(words))] for i in range(number_words)])
 		self.data["answer"] = phrase
-		# These don't need to be cryptographically secure
-		# In order to make sure your browser doesn't cache the image, a new request is made each time, with a new id
-		unique_ids = config.getint("Captcha", "num_image_ids")
-		self.data["image_id"] = generator.randrange(unique_ids)
 		session.modified = True
-		return self.data["image_id"]
 
 	def generate_image(self):
-		captcha = ImageCaptcha(fonts=[config.get("System", "font")])
-		return send_file(captcha.generate(self.data["answer"]), mimetype="image/png")
-
-	def valid_id(self, given_id):
-		return self.data["image_id"] == int(given_id)
+		self.bind_session()
+		captcha_image = ImageCaptcha(fonts=[config.get("System", "font")])
+		return send_file(captcha_image.generate(self.data["answer"]), mimetype="image/png")
 
 # Singleton :( is good? TODO
-captcha = CaptchaManager()
+captcha = Captcha_Manager()
 
 class User(db.Model, UserMixin):
 	user_id = db.Column(db.Integer, primary_key=True)
@@ -288,6 +275,9 @@ class Submit_Form(Form):
 	], render_kw={"placeholder": "description / any additional text"})
 	expires = StringField("days to expiration: ", [
 	], render_kw={"placeholder": "days"}, default=30)
+	captcha = StringField("", [
+		check_captcha
+	], render_kw={"placeholder": "enter the text above"})
 
 class Registration_Form(Form):
 	username = StringField("", [
@@ -301,40 +291,9 @@ class Registration_Form(Form):
 	confirm = PasswordField("", [
 		validators.EqualTo("password", "Check that the passwords match")
 	], render_kw={"placeholder": "confirm password"})
-
-### NON-ROUTE FUNCTIONS (library functions)
-
-# Use the decorator @captcha_required on routes to require a captcha when neccessary
-def captcha_required(route):
-	@wraps(route)
-	def check_captcha(*args, **kwargs):
-		if not captcha.needed():
-			return route(*args, **kwargs)
-		else:
-			return captcha_not_solved()
-	return check_captcha
-
-def captcha_not_solved(to=None):
-	if not to:
-		to = request.path
-	captcha_id = captcha.generate()
-	return render_template("captcha.html", captcha_id=captcha_id, to=to)
-
-@app.context_processor
-def add_login_form():
-	return { "login_form" : Login_Form(request.form) }
-
-@login_manager.user_loader
-def load_user(user_id_string):
-	user = User.query.filter_by(user_id=int(user_id_string)).first()
-	user.init_login()
-	return user
-
-@app.context_processor
-def utility_processor():
-	return {
-		"comment_votes": Vote.count_on_comment
-	}
+	captcha = StringField("", [
+		check_captcha
+	], render_kw={"placeholder": "enter the text above"})
 
 ### ROUTES
 
@@ -353,33 +312,22 @@ def browse():
 	else:
 		return about()
 
-@app.route("/captcha/<captcha_id>")
-def captcha_image(captcha_id):
-	if captcha.valid_id(captcha_id):
-		# Add headers to both force latest IE rendering engine or Chrome Frame
-		# This is not for security. Security-wise caches are covered by
-		# captcha_id. This just makes sure a cached image isn't shown when it's
-		# been changed, for the user's experience
-		# Thanks to https://arusahni.net/blog/2014/03/flask-nocache.html
-		response = make_response(captcha.generate_image())
-		response.headers['Last-Modified'] = datetime.datetime.now()
-		response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
-		response.headers['Pragma'] = 'no-cache'
-		response.headers['Expires'] = '-1'
-		return response
-	else:
-		return "tried to access an outdated captcha. should be " + str(session["captcha"]["image_id"]), 403
-
-@app.route("/captcha/solve", methods=["post"])
-def solve_captcha():
-	if captcha.check(request.form["answer"]):
-		return redirect(request.form["to"])
-	else:
-		return captcha_not_solved(request.form["to"])
+@app.route("/captcha")
+def captcha_image():
+	# Add headers to both force latest IE rendering engine or Chrome Frame
+	# This is not for security. Security-wise caches are covered by
+	# captcha_id. This just makes sure a cached image isn't shown when it's
+	# been changed, for the user's experience
+	# Thanks to https://arusahni.net/blog/2014/03/flask-nocache.html
+	response = make_response(captcha.generate_image())
+	response.headers['Last-Modified'] = datetime.datetime.now()
+	response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+	response.headers['Pragma'] = 'no-cache'
+	response.headers['Expires'] = '-1'
+	return response
 
 @app.route("/post/<post_id>")
 @login_required
-@captcha_required
 def view_post(post_id):
 	post = Post.get_by_id(post_id)
 	if post:
@@ -390,7 +338,6 @@ def view_post(post_id):
 
 @app.route("/post/<post_id>/link")
 @login_required
-@captcha_required
 def view_link(post_id):
 	post = Post.get_by_id(post_id)
 	if post:
@@ -400,7 +347,6 @@ def view_link(post_id):
 
 @app.route("/post/<post_id>/comment", methods=["post"])
 @login_required
-@captcha_required
 def comment_on_post(post_id):
 	post = Post.get_by_id(post_id)
 	comment = Comment(current_user.username, request.form["comment"])
@@ -410,7 +356,6 @@ def comment_on_post(post_id):
 
 @app.route("/post/<post_id>/delete")
 @login_required
-@captcha_required
 def delete_post(post_id):
 	post = Post.get_by_id(post_id)
 	if current_user.username == post.user:
@@ -475,7 +420,6 @@ def logout():
 	return redirect("/")
 
 @app.route("/register", methods=["get", "post"])
-@captcha_required
 def register_page():
 	form = Registration_Form(request.form)
 	if request.method == "POST" and form.validate():
@@ -487,7 +431,6 @@ def register_page():
 
 @app.route("/submit", methods=["get", "post"])
 @login_required
-@captcha_required
 def submission_page():
 	form = Submit_Form(request.form)
 	if request.method == "POST" and form.validate():

@@ -14,6 +14,8 @@
 			{{ render_field(form.text)    }}
 			<p>this description accepts <a href="https://en.support.wordpress.com/markdown-quick-reference/">markdown</a></p>
 			{{ render_field(form.expires) }}
+			<img src="/captcha" alt="captcha" /><br />
+			{{ render_field(form.captcha) }}
 			<input type="submit" value="submit" />
 		</form>
 	</div>
