@@ -25,7 +25,7 @@ from flask import Flask, request, session, render_template, redirect, send_file,
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user, UserMixin
 from flask_principal import Principal, Identity, AnonymousIdentity, identity_changed, Permission, ActionNeed
-from wtforms import Form, StringField, PasswordField, TextAreaField, validators
+from wtforms import Form, StringField, PasswordField, TextAreaField, validators, ValidationError
 from flaskext.markdown import Markdown
 
 secure_config = configparser.ConfigParser()
