@@ -81,7 +81,7 @@ class Captcha_Manager():
 			# Captcha manager's data has not yet been put on the session
 			session["captcha"] = {}
 			self.data = session["captcha"]
-			self.data["answer"] = ""
+			self.data["answer"] = self.generate()
 		else:
 			# Reference self.data to the session for convenience
 			self.data = session["captcha"]
@@ -102,6 +102,7 @@ class Captcha_Manager():
 		phrase = " ".join([words[generator.randrange(len(words))] for i in range(number_words)])
 		self.data["answer"] = phrase
 		session.modified = True
+		return self.data["answer"]
 
 	def generate_image(self):
 		self.bind_session()
