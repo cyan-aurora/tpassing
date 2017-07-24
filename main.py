@@ -178,6 +178,30 @@ class Post(db.Model):
 			return post
 		return None
 
+	@classmethod
+	def coolest(cls):
+		post_comments_up = (
+			db.session.query(
+				Post.post_id,
+				db.func.count(Vote.vote_id).label("count"))
+			.outerjoin(Post.comments)
+			.outerjoin(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-quality") & (Vote.vote_value == "up"))
+			.group_by(Post)
+			.subquery())
+		user_comments_up = (
+			db.session.query(
+				Post.post_id,
+				db.func.count(Vote.vote_id).label("count"))
+			.outerjoin(Post.user)
+			.outerjoin(User.comments)
+			.outerjoin(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-quality") & (Vote.vote_value == "up"))
+			.group_by(Post)
+			.subquery())
+		return (Post.query
+			.join(post_comments_up, Post.post_id == post_comments_up.c.post_id)
+			.join(user_comments_up, Post.post_id == user_comments_up.c.post_id)
+			.order_by((user_comments_up.c.count - post_comments_up.c.count).desc()))
+
 class Comment(db.Model):
 	comment_id = db.Column(db.Integer, primary_key=True)
 	post_id    = db.Column(db.Integer, db.ForeignKey("post.post_id"))
@@ -321,16 +345,7 @@ def browse():
 	# Kinda like how Google Drive does it
 	if current_user.is_authenticated:
 		number_posts = 15;
-		posts = (Post.query
-			.join(Post.comments)
-			.join(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-quality") & (Vote.vote_value == "up"))
-			.group_by(Post)
-			.order_by(db.func.count(Vote.vote_id).asc())
-			.all())
-		# posts = (Post.query
-		# 	.filter(Post.expires > datetime.datetime.now())
-		# 	.order_by(Post.created.desc())
-		# 	.all())
+		posts = Post.coolest().limit(number_posts).all()
 		return render_template("browse.html", posts=posts)
 	else:
 		return about()
