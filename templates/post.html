@@ -32,10 +32,11 @@
 			voteStatus(r.id, r.value, r.type);
 
 			// Change the displayed count
+			var wasUndo = r.performed == "undo";
 			var groupSelector = "."+r.id+"."+r.type+".count";
-			var count = $(groupSelector+"."+r.value);
+			var count = $(groupSelector+"."+(wasUndo ? r.previous : r.value));
 			// If we voted or switched, the clicked count increases
-			var increment = r.performed == "vote" || r.performed == "switch" ? 1 : -1;
+			var increment = wasUndo ? -1 : 1;
 			count.html(parseInt(count.html()) + increment);
 			if (r.performed == "switch") {
 				// Decrease the count for the other side
@@ -61,16 +62,16 @@
 			var votedColor = "#a222a5";
 			var unvotedColor = "#2471a8";
 
-			var fullId = id + "-" + type + value;
-
 			// Make all grouped links unclicked...
 			$("." + id + "." + type +               ".link").css({color: unvotedColor});
 			// ... and make clicked one appear clicked (TODO: Pick color)
-			$("." + id + "." + type + "." + value + ".link").css({color:   votedColor});
+			if (value) {
+				$("." + id + "." + type + "." + value + ".link").css({color:   votedColor});
+			}
 
 		}
 
-		window.addEventListener("load", loadVotes);
+		$(loadVotes);
 
 	</script>
 {% endblock %}

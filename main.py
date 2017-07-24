@@ -243,7 +243,7 @@ class Vote(db.Model):
 		else:
 			vote = cls(vote_type, item_id, vote_value)
 			db.session.add(vote)
-			rv = ("vote", vote_value)
+			rv = ("vote", "")
 		db.session.commit()
 		return rv
 
@@ -265,6 +265,7 @@ class Vote(db.Model):
 			.union_all(db.session.query(cls.item_on_id, cls.vote_type, cls.vote_value)
 				.filter(cls.vote_type == "post-passes")
 				.join(Post, Post.post_id == cls.item_on_id)
+				.filter(cls.user_id == current_user.user_id)\
 				.filter(Post.post_id == int(post_id))
 			).all()
 		return votes
@@ -392,7 +393,7 @@ def vote_on_post():
 	rv = {}
 	rv["id"] = item_id
 	rv["type"] = vote_type
-	rv["value"] = vote_value
+	rv["value"] = vote_value if action != "undo" else ""
 	rv["performed"] = action
 	rv["previous"] = previous
 	return json.dumps(rv)
