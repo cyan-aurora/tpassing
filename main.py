@@ -69,7 +69,7 @@ def load_user(user_id_string):
 @app.context_processor
 def utility_processor():
 	return {
-		"comment_votes": Vote.count_on_comment
+		"votes": Vote.count_on_id
 	}
 
 ### CLASSES
@@ -113,9 +113,10 @@ class Captcha_Manager():
 captcha = Captcha_Manager()
 
 class User(db.Model, UserMixin):
-	user_id = db.Column(db.Integer, primary_key=True)
+	user_id  = db.Column(db.Integer, primary_key=True)
 	username = db.Column(db.String(40), unique=True)
 	password = db.Column(db.String(60))
+	posts    = db.relationship("Post")
 
 	def __init__(self, username, password):
 		self.username = username.encode("utf-8")
@@ -144,18 +145,23 @@ class User(db.Model, UserMixin):
 	def get_id(self):
 		return str(self.user_id)
 
+	# @hybrid_method
+	# def comment_karma(self):
+	# 	return 0
+
 class Post(db.Model):
 	post_id     = db.Column(db.Integer, primary_key=True)
 	url         = db.Column(db.String(150))
-	user        = db.Column(db.String(100))
 	gender      = db.Column(db.String(50))
 	description = db.Column(db.Text)
 	created     = db.Column(db.DateTime, default=db.func.current_timestamp())
 	expires     = db.Column(db.DateTime)
+	user_id     = db.Column(db.Integer, db.ForeignKey("user.user_id"))
+	user        = db.relationship("User", back_populates="posts")
 	comments    = db.relationship("Comment", lazy="dynamic", cascade="all, delete")
 
-	def __init__(self, user, url, gender, description, days_to_expiration):
-		self.user        = user
+	def __init__(self, user_id, url, gender, description, days_to_expiration):
+		self.user_id     = user_id
 		self.url         = url
 		self.gender      = gender
 		self.description = description
@@ -194,10 +200,10 @@ class Comment(db.Model):
 class Vote(db.Model):
 	# Though all other fields will never be the same, each one could be duplicate
 	vote_id = db.Column(db.Integer, primary_key = True)
-	vote_type = db.Column(db.Enum("comment-agree", "comment-quality"))
+	vote_type = db.Column(db.Enum("comment-agree", "comment-quality", "post-passes"))
 	item_on_id = db.Column(db.Integer) # It's a foreignkey but can't specify because could be from any class
 	user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"))
-	vote_value = db.Column(db.Enum("up", "down"))
+	vote_value = db.Column(db.Enum("up", "down", "maybe"))
 
 	def __init__(self, vote_type, item_on_id, vote_value):
 		self.vote_type    = vote_type
@@ -220,40 +226,47 @@ class Vote(db.Model):
 
 	@classmethod
 	def vote(cls, vote_type, item_id, vote_value):
+		item_id = int(item_id)
 		vote = cls.get(vote_type, item_id, current_user.user_id)
 		rv = ""
 		if vote:
 			if vote.vote_value == vote_value:
 				# Undoing a previously done vote
 				db.session.delete(vote)
-				rv = "undo"
+				rv = ("undo", vote_value)
 			else:
 				# A vote of another type was previously made
+				# Send back the previous value
+				rv = ("switch", vote.vote_value)
 				# Modify its vote type
 				vote.vote_value = vote_value
-				rv = "switch"
 		else:
 			vote = cls(vote_type, item_id, vote_value)
 			db.session.add(vote)
-			rv = "vote"
+			rv = ("vote", vote_value)
 		db.session.commit()
 		return rv
 
 	@classmethod
-	def count_on_comment(cls, comment, vote_type, vote_value):
-		query = cls.query.filter_by(item_on_id=comment.comment_id,
+	def count_on_id(cls, item_id, vote_type, vote_value):
+		query = cls.query.filter_by(item_on_id=item_id,
 			vote_type=vote_type,
 			vote_value=vote_value
 			)
 		return query.count()
 
 	@classmethod
-	def get_post_comment_votes(cls, post_id):
+	def get_post_votes(cls, post_id):
 		votes = db.session.query(Comment.comment_id, cls.vote_type, cls.vote_value)\
+			.filter((cls.vote_type == "comment-quality") | (cls.vote_type == "comment-agree"))\
 			.join(cls, cls.item_on_id == Comment.comment_id)\
 			.filter(cls.user_id == current_user.user_id)\
 			.filter(Comment.post_id == int(post_id))\
-			.all()
+			.union_all(db.session.query(cls.item_on_id, cls.vote_type, cls.vote_value)
+				.filter(cls.vote_type == "post-passes")
+				.join(Post, Post.post_id == cls.item_on_id)
+				.filter(Post.post_id == int(post_id))
+			).all()
 		return votes
 
 class Login_Form(Form):
@@ -306,8 +319,9 @@ def browse():
 	if current_user.is_authenticated:
 		number_posts = 15;
 		posts = (Post.query
-			.filter(Post.expires > datetime.datetime.now())
-			.order_by(Post.created.desc())
+			.join(Post.comments)
+			.group_by(Post)
+			.order_by(db.func.count(Comment.comment_id).desc())
 			.all())
 		return render_template("browse.html", posts=posts)
 	else:
@@ -368,26 +382,32 @@ def delete_post(post_id):
 		# TODO: Better
 		return "It appears you are not the owner of this post, or you are not logged in."
 
-@app.route("/comment/<comment_id>/vote")
+@app.route("/vote")
 @login_required
-def vote_on_comment(comment_id):
-	vote_value = request.args.get("vote")
+def vote_on_post():
+	item_id = request.args.get("id")
+	vote_type = request.args.get("type")
+	vote_value = request.args.get("value")
+	action, previous = Vote.vote(vote_type, item_id, vote_value)
 	rv = {}
-	vote_type = "comment-" + request.args.get("type")
-	rv["performed"] = Vote.vote(vote_type, comment_id, vote_value)
+	rv["id"] = item_id
+	rv["type"] = vote_type
+	rv["value"] = vote_value
+	rv["performed"] = action
+	rv["previous"] = previous
 	return json.dumps(rv)
 
-@app.route("/post/<post_id>/comments/votes")
+@app.route("/post/<post_id>/votes")
 @login_required
-def send_comment_votes(post_id):
-	votes = Vote.get_post_comment_votes(post_id)
+def send_votes(post_id):
+	votes = Vote.get_post_votes(post_id)
 	rv = { "votes" : [] }
 	for i, vote in enumerate(votes):
 		vote_dict = {}
 		rv["votes"].append(vote_dict)
-		vote_dict["comment_id"] = vote[0]
-		vote_dict["type"]       = vote[1].replace("comment-", "")
-		vote_dict["value"]      = vote[2]
+		vote_dict["id"]    = vote[0]
+		vote_dict["type"]  = vote[1]
+		vote_dict["value"] = vote[2]
 	return json.dumps(rv)
 
 # So you can still access about when logged in
@@ -436,7 +456,7 @@ def submission_page():
 	form = Submit_Form(request.form)
 	if request.method == "POST" and form.validate():
 		post = Post(
-				current_user.username,
+				current_user.user_id,
 				form.url.data,
 				form.gender.data,
 				form.text.data,

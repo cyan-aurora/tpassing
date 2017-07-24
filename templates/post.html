@@ -6,16 +6,13 @@
 
 		// TODO: Make this not horribly ugly code
 
-		voted = {};
-
 		function checkVotes() {
 
 			response = JSON.parse(this.responseText);
 			votes = response.votes;
 			for (var i=0; i<votes.length; i++) {
 				var vote = votes[i];
-				voteStatus(vote["comment_id"].toString(), vote["value"] == "up", vote["type"] == "quality", false);
-				// Display somehow
+				voteStatus(vote["id"], vote["value"], vote["type"]);
 			}
 
 		}
@@ -24,67 +21,52 @@
 
 			var request = new XMLHttpRequest();
 			request.addEventListener("load", checkVotes);
-			request.open("GET", "/post/{{ post.post_id }}/comments/votes");
+			request.open("GET", "/post/{{ post.post_id }}/votes");
 			request.send();
 
 		}
 
-		function vote(id, up, quality, undo) {
+		function displayVote() {
+			var r = JSON.parse(this.responseText);
 
-			// Make a request to the website that indicates a vote
-			var upDown = up ? "up" : "down";
-			var notUpDown = up ? "down" : "up";
-
-			var voteRequest = new XMLHttpRequest();
-			var qualityString = quality ? "quality-" : "";
-			var qualityUrlString = quality ? "quality" : "agree";
-			voteRequest.open("GET", "/comment/" + id.toString() + "/vote?vote=" + upDown + "&type=" + qualityUrlString);
-			voteRequest.send();
-
-			// For manipulating the counts and links
-			var fullId = id.toString() + "-" + qualityString + upDown;
-			var otherFullId = id.toString() + "-" + qualityString + notUpDown;
-			var count = document.getElementById(fullId);
-			var otherCount = document.getElementById(otherFullId);
-
-			voteStatus(id, up, quality, undo);
+			voteStatus(r.id, r.value, r.type);
 
 			// Change the displayed count
-			count.innerHTML = parseInt(count.innerHTML) + (undo ? -1 : 1);
-
-			// If the other one has been voted, cancel it
-			if (voted[otherFullId]) {
-				// Display the right color
-				voteStatus(id, !up, quality, true);
+			var groupSelector = "."+r.id+"."+r.type+".count";
+			var count = $(groupSelector+"."+r.value);
+			// If we voted or switched, the clicked count increases
+			var increment = r.performed == "vote" || r.performed == "switch" ? 1 : -1;
+			count.html(parseInt(count.html()) + increment);
+			if (r.performed == "switch") {
 				// Decrease the count for the other side
-				otherCount.innerHTML = parseInt(otherCount.innerHTML) - 1;
+				var other = $(groupSelector+"."+r.previous);
+				console.log(parseInt(other.html()) - 1);
+				other.html(parseInt(other.html()) - 1);
 			}
+		}
+
+		function vote(id, type, value, undo) {
+
+			var voteRequest = new XMLHttpRequest();
+			voteRequest.open("GET", "/vote?type=" + type + "&id=" + id.toString() + "&value=" + value);
+			voteRequest.addEventListener("load", displayVote)
+			voteRequest.send();
 
 		}
 
-		function voteStatus(id, up, quality, undo) {
+		function voteStatus(id, value, type) {
+
+			id = id.toString()
 
 			var votedColor = "#a222a5";
 			var unvotedColor = "#2471a8";
 
-			var upDown = up ? "up" : "down";
-			var qualityString = quality ? "quality-" : ""
+			var fullId = id + "-" + type + value;
 
-			// For manipulating the counts and links
-			var fullId = id.toString() + "-" + qualityString + upDown;
-			var link = document.getElementById(fullId + "-link");
-
-			// Remember the vote for use when undoing
-			voted[fullId] = !undo;
-			// Color the link according to vote
-			if (undo) {
-				link.style.color = unvotedColor;
-			}
-			else {
-				link.style.color = votedColor; // TODO: Pick a color
-			}
-			// Make clicking the vote undo what we just did, whether that's re-voting or undoing
-			link.onclick = function() { vote(id, up, quality, !undo); };
+			// Make all grouped links unclicked...
+			$("." + id + "." + type +               ".link").css({color: unvotedColor});
+			// ... and make clicked one appear clicked (TODO: Pick color)
+			$("." + id + "." + type + "." + value + ".link").css({color:   votedColor});
 
 		}
 
@@ -96,12 +78,20 @@
 {% block main %}
 <div class="wrap">
 	<a href="/post/{{ post.post_id }}/link">link</a>
-	<p>user: {{ post.user }}</p>
+	<p>user: {{ post.user.username }}</p>
 	<p>target gender: {{ post.gender }}</p>
 	<div class="user-entered">{{ post.description|e|markdown }}</div>
 	{% if current_user.username == post.user %}
 		<p><a href="/post/{{ post.post_id }}/delete">delete</a></p>
 	{% endif %}
+	<div style="margin-top: 20px;">
+		<a class="{{ post.post_id }} post-passes up link" href="javascript:void(0);" onclick="vote({{ post.post_id }}, 'post-passes', 'up')">Passes</a>
+		- <span class="{{ post.post_id }} post-passes up count">{{ votes(post.post_id, "post-passes", "up") }}</span> |
+		<a class="{{ post.post_id }} post-passes down link" href="javascript:void(0);" onclick="vote({{ post.post_id }}, 'post-passes', 'down')">Not yet</a>
+		- <span class="{{ post.post_id }} post-passes down count">{{ votes(post.post_id, "post-passes", "down") }}</span> |
+		<a class="{{ post.post_id }} post-passes maybe link" href="javascript:void(0);" onclick="vote({{ post.post_id }}, 'post-passes', 'maybe')">Other / Not Sure</a>
+		- <span class="{{ post.post_id }} post-passes maybe count">{{ votes(post.post_id, "post-passes", "maybe") }}</span>
+	</div>
 	<h2>comments</h2>
 	<form class="full-form" action="/post/{{ post.post_id }}/comment" method="post">
 		<p style="text-align: right;">comments accept <a href="https://en.support.wordpress.com/markdown-quick-reference/">markdown</a></p>
@@ -115,16 +105,16 @@
 			</span>
 			<div class="user-entered">{{ comment.text|e|markdown }}</div>
 			<span>
-				<a id="{{comment.comment_id}}-up-link" href="javascript:void(0);" onclick="vote({{comment.comment_id}}, true);">agree</a>
-				- <span id="{{comment.comment_id}}-up">{{ comment_votes(comment, "comment-agree", "up") }}</span>
-				| <a id="{{comment.comment_id}}-down-link" href="javascript:void(0);" onclick="vote({{comment.comment_id}}, false);">disagree</a>
-				- <span id="{{comment.comment_id}}-down">{{ comment_votes(comment, "comment-agree", "down") }}</span>
+				<a class="{{comment.comment_id}} comment-quality up link" href="javascript:void(0);" onclick="vote({{comment.comment_id}}, 'comment-quality', 'up');">constructive</a>
+				- <span class="{{comment.comment_id}} comment-quality up count">{{ votes(comment.comment_id, "comment-quality", "up") }}</span>
+				| <a class="{{comment.comment_id}} comment-quality down link" href="javascript:void(0);" onclick="vote({{comment.comment_id}}, 'comment-quality', 'down');">unconstructive</a>
+				- <span class="{{comment.comment_id}} comment-quality down count">{{ votes(comment.comment_id, "comment-quality", "down") }}</span>
 			</span>
 			<span style="float: right">
-				<a id="{{comment.comment_id}}-quality-up-link" href="javascript:void(0);" onclick="vote({{comment.comment_id}}, true, true);">constructive</a>
-				- <span id="{{comment.comment_id}}-quality-up">{{ comment_votes(comment, "comment-quality", "up") }}</span>
-				| <a id="{{comment.comment_id}}-quality-down-link" href="javascript:void(0);" onclick="vote({{comment.comment_id}}, false, true);">unconstructive</a>
-				- <span id="{{comment.comment_id}}-quality-down">{{ comment_votes(comment, "comment-quality", "down") }}</span>
+				<a class="{{comment.comment_id}} comment-agree up link" href="javascript:void(0);" onclick="vote({{comment.comment_id}}, 'comment-agree', 'up');">agree</a>
+				- <span class="{{comment.comment_id}} comment-agree up count">{{ votes(comment.comment_id, "comment-agree", "up") }}</span>
+				| <a class="{{comment.comment_id}} comment-agree down link" href="javascript:void(0);" onclick="vote({{comment.comment_id}}, 'comment-agree', 'down');">disagree</a>
+				- <span class="{{comment.comment_id}} comment-agree down count">{{ votes(comment.comment_id, "comment-agree", "down") }}</span>
 			</span>
 		</div>
 	{% endfor %}
