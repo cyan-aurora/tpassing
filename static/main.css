@@ -103,6 +103,9 @@ tr:first-child {
 tr:hover {
 	background-color: #1b97f0;
 }
+table a:visited {
+	color: #a222a5;
+}
 
 .logout {
 	font-size: 20px;

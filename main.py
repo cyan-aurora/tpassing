@@ -160,6 +160,7 @@ class Post(db.Model):
 	user_id     = db.Column(db.Integer, db.ForeignKey("user.user_id"))
 	user        = db.relationship("User", back_populates="posts")
 	comments    = db.relationship("Comment", lazy="dynamic", cascade="all, delete")
+	views       = db.relationship("View", lazy="dynamic", cascade="all, delete")
 
 	def __init__(self, user_id, url, gender, description, days_to_expiration):
 		self.user_id     = user_id
@@ -323,6 +324,23 @@ class Vote(db.Model):
 			).all()
 		return votes
 
+class View(db.Model):
+	view_id = db.Column(db.Integer, primary_key = True)
+	user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"))
+	post_id = db.Column(db.Integer, db.ForeignKey("post.post_id"))
+	post    = db.relationship("Post", back_populates="views")
+	def __init__(self, user_id, post_id):
+		self.user_id = user_id
+		self.post_id = post_id
+	def __repr__(self):
+		return "<View %r by %r>" % (self.post_id, self.user_id)
+	@classmethod
+	def view(cls, post_id):
+		entry = cls(current_user.user_id, post_id)
+		db.session.add(entry)
+		db.session.commit()
+
+
 class Login_Form(Form):
 	username = StringField("", [
 		validators.DataRequired(),
@@ -371,9 +389,18 @@ def browse():
 	# If logged in, root is browsing. Otherwise it's explanation.
 	# Kinda like how Google Drive does it
 	if current_user.is_authenticated:
-		number_posts = 15;
-		posts = Post.coolest().limit(number_posts).all()
-		return render_template("browse.html", posts=posts)
+		number_posts = 100;
+		show_viewed = request.args.get("show-viewed")
+		post_viewed = (db.session.query(
+				Post.post_id,
+				View.view_id)
+			.join(View, (View.post_id == Post.post_id) & (View.user_id == current_user.user_id))
+			.subquery())
+		posts = (Post.coolest()
+			.outerjoin(post_viewed, Post.post_id == post_viewed.c.post_id)
+			.filter(post_viewed.c.view_id != None if show_viewed else post_viewed.c.view_id == None)
+			.limit(number_posts).all())
+		return render_template("browse.html", posts=posts, showing_viewed=show_viewed, is_more=len(posts)==number_posts)
 	else:
 		return about()
 
@@ -396,6 +423,7 @@ def captcha_image():
 def view_post(post_id):
 	post = Post.get_by_id(post_id)
 	if post:
+		View.view(post_id)
 		comments = post.comments.limit(100).all()
 		return render_template("post.html", post=post, comments=comments)
 	else:

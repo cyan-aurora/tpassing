@@ -4,6 +4,11 @@
 	<div class="wrap">
 		<a href="/submit">request feedback</a>
 		<p><a href="/about">about tpassing</a></p>
+		{% if not showing_viewed %}
+			<p><a href="/browse?show-viewed=true">show already-viewed posts</a></p>
+		{% else %}
+			<p>viewing already-viewed posts. <a href="/browse">show unviewed posts</a></p>
+		{% endif %}
 		<table>
 			<tr>
 				<td>link</td>
@@ -20,5 +25,6 @@
 			</tr>
 		{% endfor %}
 		</table>
+		{% if not showing_viewed and is_more %}<p>view posts to see more (viewed posts are hidden)</p>{% endif %}
 	</div>
 {% endblock %}
