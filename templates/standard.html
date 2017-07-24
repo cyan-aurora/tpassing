@@ -43,6 +43,15 @@
 	</div>
 	<a href="https://www.google.com/" class="exit-floater">exit page quickly</a>
 	<div class="wrap">
+		{% with messages = get_flashed_messages() %}
+			{% if messages %}
+				<ul class="flashes">
+					{% for message in messages %}
+						<li>{{ message }}</li>
+					{% endfor %}
+				</ul>
+			{% endif %}
+		{% endwith %}
 		{% block main %}{% endblock %}
 	</div>
 </body>
