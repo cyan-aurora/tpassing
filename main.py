@@ -353,7 +353,8 @@ class Login_Form(Form):
 
 class Submit_Form(Form):
 	url = StringField("", [
-		validators.URL()
+		validators.URL(),
+		validators.Optional()
 	], render_kw={"placeholder": "link"})
 	gender = StringField("", [
 	], render_kw={"placeholder": "target gender (optional)"})

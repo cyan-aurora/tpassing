@@ -78,7 +78,7 @@
 
 {% block main %}
 <div class="wrap">
-	<a href="/post/{{ post.post_id }}/link">link</a>
+	{% if post.url %}<a href="/post/{{ post.post_id }}/link">link</a>{% endif %}
 	<p>user: {{ post.user.username }}</p>
 	<p>target gender: {{ post.gender }}</p>
 	<div class="user-entered">{{ post.description|e|markdown }}</div>
