@@ -56,6 +56,11 @@ def check_captcha(form, field):
 	if not captcha.check(field.data):
 		raise ValidationError("CAPTCHA is incorrect")
 
+def username_unique(form, field):
+	username = field.data
+	if User.query.filter(User.username == username) is not None:
+		raise ValidationError("Username is already taken")
+
 @app.context_processor
 def add_login_form():
 	return { "login_form" : Login_Form(request.form) }
@@ -369,6 +374,7 @@ class Submit_Form(Form):
 class Registration_Form(Form):
 	username = StringField("", [
 		validators.DataRequired(),
+		username_unique,
 		validators.Length(min=1, max=99)
 	], render_kw={"placeholder": "username"})
 	password = PasswordField("", [
