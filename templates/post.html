@@ -82,7 +82,7 @@
 	<p>user: {{ post.user.username }}</p>
 	<p>target gender: {{ post.gender }}</p>
 	<div class="user-entered">{{ post.description|e|markdown }}</div>
-	{% if current_user.username == post.user %}
+	{% if current_user.user_id == post.user_id %}
 		<p><a href="/post/{{ post.post_id }}/delete">delete</a></p>
 	{% endif %}
 	<div style="margin-top: 20px;">
@@ -101,8 +101,8 @@
 	</form>
 	{% for comment in comments %}
 		<div style="margin: 20px 0;">
-			<span{% if comment.user == post.user %} class="original-poster"{% endif %}>
-				{{ comment.user }}
+			<span{% if comment.user_id == post.user_id %} class="original-poster"{% endif %}>
+				{{ comment.user.username }}
 			</span>
 			<div class="user-entered">{{ comment.text|e|markdown }}</div>
 			<span>
