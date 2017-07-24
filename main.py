@@ -117,6 +117,7 @@ class User(db.Model, UserMixin):
 	username = db.Column(db.String(40), unique=True)
 	password = db.Column(db.String(60))
 	posts    = db.relationship("Post")
+	comments = db.relationship("Comment")
 
 	def __init__(self, username, password):
 		self.username = username.encode("utf-8")
@@ -168,7 +169,7 @@ class Post(db.Model):
 		self.expires     = datetime.datetime.now() + datetime.timedelta(days = int(days_to_expiration))
 
 	def __repr__(self):
-		return "<Post %r by %r>" % (self.post_id, self.user)
+		return "<Post %r by %r>" % (self.post_id, self.user.username)
 
 	@classmethod
 	def get_by_id(cls, post_id):
@@ -180,16 +181,17 @@ class Post(db.Model):
 class Comment(db.Model):
 	comment_id = db.Column(db.Integer, primary_key=True)
 	post_id    = db.Column(db.Integer, db.ForeignKey("post.post_id"))
-	user       = db.Column(db.String(100))
+	user_id    = db.Column(db.Integer, db.ForeignKey("user.user_id"))
 	created    = db.Column(db.DateTime, default=db.func.current_timestamp())
 	text       = db.Column(db.Text)
+	user       = db.relationship("User", back_populates="comments")
 
-	def __init__(self, user, text):
-		self.user = user
+	def __init__(self, user_id, text):
+		self.user_id = user_id
 		self.text = text
 
 	def __repr__(self):
-		return "<Comment %r by %r>" % (self.item_on_id, self.user)
+		return "<Comment %r by %r>" % (self.item_on_id, self.user.username)
 
 	@classmethod
 	def get_by_id(cls, comment_id):
@@ -321,9 +323,14 @@ def browse():
 		number_posts = 15;
 		posts = (Post.query
 			.join(Post.comments)
+			.join(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-quality") & (Vote.vote_value == "up"))
 			.group_by(Post)
-			.order_by(db.func.count(Comment.comment_id).desc())
+			.order_by(db.func.count(Vote.vote_id).asc())
 			.all())
+		# posts = (Post.query
+		# 	.filter(Post.expires > datetime.datetime.now())
+		# 	.order_by(Post.created.desc())
+		# 	.all())
 		return render_template("browse.html", posts=posts)
 	else:
 		return about()
@@ -365,7 +372,7 @@ def view_link(post_id):
 @login_required
 def comment_on_post(post_id):
 	post = Post.get_by_id(post_id)
-	comment = Comment(current_user.username, request.form["comment"])
+	comment = Comment(current_user.user_id, request.form["comment"])
 	post.comments.append(comment)
 	db.session.commit()
 	return redirect("/post/" + post_id)
@@ -374,7 +381,7 @@ def comment_on_post(post_id):
 @login_required
 def delete_post(post_id):
 	post = Post.get_by_id(post_id)
-	if current_user.username == post.user:
+	if current_user.user_id == post.user_id:
 		db.session.delete(post)
 		db.session.commit()
 		# TODO: Flash
