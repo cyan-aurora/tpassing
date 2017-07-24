@@ -180,6 +180,22 @@ class Post(db.Model):
 
 	@classmethod
 	def coolest(cls):
+		# This is a SQL mess (TODO) to compute the following formula:
+		# 2 * `commenting rep` - `total upvotes on comments on all own posts` - `total upvotes on comments on this post`
+		# This makes it so giving good feedback makes your post higher up,
+		# new posts appear higher up,
+		# and people who post often appear lower down (unless they comment more often)
+		labeled_user_posts = db.aliased(User.posts, name="user_posts")
+		# The amount of positive feedback the poster has recieved
+		user_post_comments_up = (
+			db.session.query(
+				Post.post_id,
+				db.func.count(Vote.vote_id).label("count"))
+			.outerjoin(Post.user, labeled_user_posts, labeled_user_posts.comments)
+			.outerjoin(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-quality") & (Vote.vote_value == "up"))
+			.group_by(Post)
+			.subquery())
+		# The amount of positive feedback /this post/ has recieved
 		post_comments_up = (
 			db.session.query(
 				Post.post_id,
@@ -188,19 +204,30 @@ class Post(db.Model):
 			.outerjoin(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-quality") & (Vote.vote_value == "up"))
 			.group_by(Post)
 			.subquery())
+		# The amount of /positive/ feedback the poster has given
 		user_comments_up = (
 			db.session.query(
 				Post.post_id,
 				db.func.count(Vote.vote_id).label("count"))
-			.outerjoin(Post.user)
-			.outerjoin(User.comments)
+			.outerjoin(Post.user, User.comments)
 			.outerjoin(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-quality") & (Vote.vote_value == "up"))
 			.group_by(Post)
 			.subquery())
+		# The amount of /negative/ feedback the poster has given
+		user_comments_down = (
+			db.session.query(
+				Post.post_id,
+				db.func.count(Vote.vote_id).label("count"))
+			.outerjoin(Post.user, User.comments)
+			.outerjoin(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-quality") & (Vote.vote_value == "down"))
+			.group_by(Post)
+			.subquery())
 		return (Post.query
+			.join(user_post_comments_up, Post.post_id == user_post_comments_up.c.post_id)
 			.join(post_comments_up, Post.post_id == post_comments_up.c.post_id)
 			.join(user_comments_up, Post.post_id == user_comments_up.c.post_id)
-			.order_by((user_comments_up.c.count - post_comments_up.c.count).desc()))
+			.join(user_comments_down, Post.post_id == user_comments_down.c.post_id)
+			.order_by((2 * (user_comments_up.c.count - user_comments_down.c.count) - user_post_comments_up.c.count - post_comments_up.c.count).desc()))
 
 class Comment(db.Model):
 	comment_id = db.Column(db.Integer, primary_key=True)
