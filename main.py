@@ -329,6 +329,15 @@ class Vote(db.Model):
 			).all()
 		return votes
 
+	@classmethod
+	def comment_subq(cls, vote_type, vote_value):
+		return (db.session.query(
+				Comment.comment_id,
+				db.func.count(Vote.vote_id).label("count"))
+			.outerjoin(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == vote_type) & (Vote.vote_value == vote_value))
+			.group_by(Comment)
+			.subquery())
+
 class View(db.Model):
 	view_id = db.Column(db.Integer, primary_key = True)
 	user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"))
@@ -431,39 +440,21 @@ def view_post(post_id):
 	post = Post.get_by_id(post_id)
 	if post:
 		View.view(post_id)
+		max_comments = 1000
 		# We sort comments by (quality difference) + c * (agreement difference)
 		# c: The percent as valuable agreement is to quality in the comment sorting algorithm
 		agree_to_quality_factor = 1
-		quality_up = (db.session.query(
-				Comment.comment_id,
-				db.func.count(Vote.vote_id).label("count"))
-			.outerjoin(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-quality") & (Vote.vote_value == "up"))
-			.group_by(Comment)
-			.subquery())
-		quality_down = (db.session.query(
-				Comment.comment_id,
-				db.func.count(Vote.vote_id).label("count"))
-			.outerjoin(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-quality") & (Vote.vote_value == "down"))
-			.group_by(Comment)
-			.subquery())
-		agree_up = (db.session.query(
-				Comment.comment_id,
-				db.func.count(Vote.vote_id).label("count"))
-			.outerjoin(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-agree") & (Vote.vote_value == "up"))
-			.group_by(Comment)
-			.subquery())
-		agree_down = (db.session.query(
-				Comment.comment_id,
-				db.func.count(Vote.vote_id).label("count"))
-			.outerjoin(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-agree") & (Vote.vote_value == "down"))
-			.group_by(Comment)
-			.subquery())
+		quality_up = Vote.comment_subq("comment-quality", "up")
+		quality_down = Vote.comment_subq("comment-quality", "down")
+		agree_up = Vote.comment_subq("comment-agree", "up")
+		agree_down = Vote.comment_subq("comment-agree", "down")
 		comments = (post.comments
 			.join(quality_up, Comment.comment_id == quality_up.c.comment_id)
 			.join(quality_down, Comment.comment_id == quality_down.c.comment_id)
 			.join(agree_up, Comment.comment_id == agree_up.c.comment_id)
 			.join(agree_down, Comment.comment_id == agree_down.c.comment_id)
-			.order_by((agree_to_quality_factor * (agree_up.c.count - agree_down.c.count) + (quality_up.c.count - quality_down.c.count)).desc()).limit(100).all())
+			.order_by((agree_to_quality_factor * (agree_up.c.count - agree_down.c.count) + (quality_up.c.count - quality_down.c.count)).desc())
+			.limit(max_comments).all())
 		return render_template("post.html", post=post, comments=comments)
 	else:
 		return render_template("removed.html")
