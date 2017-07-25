@@ -21,7 +21,7 @@ from random import SystemRandom
 
 from captcha.image import ImageCaptcha
 
-from flask import Flask, request, session, render_template, redirect, send_file, make_response, current_app
+from flask import Flask, request, session, render_template, redirect, send_file, make_response, current_app, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user, UserMixin
 from flask_principal import Principal, Identity, AnonymousIdentity, identity_changed, Permission, ActionNeed
@@ -274,6 +274,7 @@ class Comment(db.Model):
 	created    = db.Column(db.DateTime, default=db.func.current_timestamp())
 	text       = db.Column(db.Text)
 	user       = db.relationship("User", back_populates="comments")
+	post       = db.relationship("Post", back_populates="comments")
 
 	def __init__(self, user_id, text):
 		self.user_id = user_id
@@ -516,11 +517,25 @@ def delete_post(post_id):
 	if current_user.user_id == post.user_id:
 		db.session.delete(post)
 		db.session.commit()
-		# TODO: Flash
+		flash("the post was deleted successfully")
 		return redirect("/")
 	else:
-		# TODO: Better
-		return "It appears you are not the owner of this post, or you are not logged in."
+		flash("it appears you are not th owner of this post, or you are not logged in")
+		return redirect("/post/" + str(post_id))
+
+@app.route("/comment/<comment_id>/delete")
+@login_required
+def delete_comment(comment_id):
+	comment = Comment.get_by_id(comment_id)
+	post_url = "/post/" + str(comment.post.post_id)
+	if current_user.user_id == comment.user_id:
+		db.session.delete(comment)
+		db.session.commit()
+		flash("the comment was deleted successfully")
+		return redirect(post_url)
+	else:
+		flash("it appears you are not the owner of this comment, or you are not logged in")
+		return redirect(post_url)
 
 @app.route("/vote")
 @login_required
