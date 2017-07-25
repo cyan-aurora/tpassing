@@ -253,6 +253,7 @@ class Post(db.Model):
 			.group_by(Post)
 			.subquery())
 		return (Post.query
+			.filter(Post.expires > datetime.datetime.now())
 			.join(user_post_comments_up, Post.post_id == user_post_comments_up.c.post_id)
 			.join(post_comments_up, Post.post_id == post_comments_up.c.post_id)
 			.join(user_comments_up, Post.post_id == user_comments_up.c.post_id)
