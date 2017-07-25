@@ -259,7 +259,7 @@ class Comment(db.Model):
 class Vote(db.Model):
 	# Though all other fields will never be the same, each one could be duplicate
 	vote_id = db.Column(db.Integer, primary_key = True)
-	vote_type = db.Column(db.Enum("comment-agree", "comment-quality", "post-passes"))
+	vote_type = db.Column(db.Enum("comment-agree", "comment-quality", "post-passes", "post-quality"))
 	item_on_id = db.Column(db.Integer) # It's a foreignkey but can't specify because could be from any class
 	user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"))
 	vote_value = db.Column(db.Enum("up", "down", "maybe"))
@@ -322,7 +322,7 @@ class Vote(db.Model):
 			.filter(cls.user_id == current_user.user_id)\
 			.filter(Comment.post_id == int(post_id))\
 			.union_all(db.session.query(cls.item_on_id, cls.vote_type, cls.vote_value)
-				.filter(cls.vote_type == "post-passes")
+				.filter((cls.vote_type == "post-passes") | (cls.vote_type == "post-quality"))
 				.join(Post, Post.post_id == cls.item_on_id)
 				.filter(cls.user_id == current_user.user_id)\
 				.filter(Post.post_id == int(post_id))

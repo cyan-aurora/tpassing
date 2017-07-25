@@ -76,6 +76,11 @@
 	</script>
 {% endblock %}
 
+{% macro vote_link(id, type, value, text, is_end) %}
+	<a class="{{ id }} {{ type }} {{ value }} link" href="javascript:void(0);" onclick="vote({{ id }}, '{{ type }}', '{{ value }}')">{{ text }}</a>
+	- <span class="{{ id }} {{ type }} {{ value }} count">{{ votes(id, type, value) }}</span>{% if not is_end %} |{% endif %}
+{% endmacro %}
+
 {% block main %}
 <div class="wrap">
 	{% if post.url %}<a href="/post/{{ post.post_id }}/link">link</a>{% endif %}
@@ -85,14 +90,15 @@
 	{% if current_user.user_id == post.user_id %}
 		<p><a href="/post/{{ post.post_id }}/delete">delete</a></p>
 	{% endif %}
-	<div style="margin-top: 20px;">
-		<a class="{{ post.post_id }} post-passes up link" href="javascript:void(0);" onclick="vote({{ post.post_id }}, 'post-passes', 'up')">Passes</a>
-		- <span class="{{ post.post_id }} post-passes up count">{{ votes(post.post_id, "post-passes", "up") }}</span> |
-		<a class="{{ post.post_id }} post-passes down link" href="javascript:void(0);" onclick="vote({{ post.post_id }}, 'post-passes', 'down')">Not yet</a>
-		- <span class="{{ post.post_id }} post-passes down count">{{ votes(post.post_id, "post-passes", "down") }}</span> |
-		<a class="{{ post.post_id }} post-passes maybe link" href="javascript:void(0);" onclick="vote({{ post.post_id }}, 'post-passes', 'maybe')">Other / Not Sure</a>
-		- <span class="{{ post.post_id }} post-passes maybe count">{{ votes(post.post_id, "post-passes", "maybe") }}</span>
-	</div>
+	<span>
+		{{ vote_link(post.post_id, "post-passes", "up", "passes") }}
+		{{ vote_link(post.post_id, "post-passes", "down", "not yet") }}
+		{{ vote_link(post.post_id, "post-passes", "maybe", "other / not sure", true) }}
+	</span>
+	<span style="float: right;">
+		{{ vote_link(post.post_id, "post-quality", "up", "high quality") }}
+		{{ vote_link(post.post_id, "post-quality", "down", "low effort", true) }}
+	</span>
 	<h2>comments</h2>
 	<form class="full-form" action="/post/{{ post.post_id }}/comment" method="post">
 		<p style="text-align: right;">comments accept <a href="https://en.support.wordpress.com/markdown-quick-reference/">markdown</a></p>
@@ -105,18 +111,16 @@
 				{{ comment.user.username }}
 			</span>
 			<div class="user-entered">{{ comment.text|e|markdown }}</div>
+
 			<span>
-				<a class="{{comment.comment_id}} comment-quality up link" href="javascript:void(0);" onclick="vote({{comment.comment_id}}, 'comment-quality', 'up');">constructive</a>
-				- <span class="{{comment.comment_id}} comment-quality up count">{{ votes(comment.comment_id, "comment-quality", "up") }}</span>
-				| <a class="{{comment.comment_id}} comment-quality down link" href="javascript:void(0);" onclick="vote({{comment.comment_id}}, 'comment-quality', 'down');">unconstructive</a>
-				- <span class="{{comment.comment_id}} comment-quality down count">{{ votes(comment.comment_id, "comment-quality", "down") }}</span>
+				{{ vote_link(comment.comment_id, "comment-agree", "up", "agree") }}
+				{{ vote_link(comment.comment_id, "comment-agree", "down", "disagree", true) }}
 			</span>
 			<span style="float: right">
-				<a class="{{comment.comment_id}} comment-agree up link" href="javascript:void(0);" onclick="vote({{comment.comment_id}}, 'comment-agree', 'up');">agree</a>
-				- <span class="{{comment.comment_id}} comment-agree up count">{{ votes(comment.comment_id, "comment-agree", "up") }}</span>
-				| <a class="{{comment.comment_id}} comment-agree down link" href="javascript:void(0);" onclick="vote({{comment.comment_id}}, 'comment-agree', 'down');">disagree</a>
-				- <span class="{{comment.comment_id}} comment-agree down count">{{ votes(comment.comment_id, "comment-agree", "down") }}</span>
+				{{ vote_link(comment.comment_id, "comment-quality", "up", "constructive") }}
+				{{ vote_link(comment.comment_id, "comment-quality", "down", "unconstructive", true) }}
 			</span>
+
 		</div>
 	{% endfor %}
 	<p>please report anything as much as tone-deaf to <a href="mailto:cyanauroratp@gmail.com">cyanauroratp@gmail.com</a>. I'm working on implementing a report feature.</p>
