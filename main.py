@@ -58,7 +58,7 @@ def check_captcha(form, field):
 
 def username_unique(form, field):
 	username = field.data
-	if User.query.filter(User.username == username) is not None:
+	if User.query.filter(User.username == username).first() is not None:
 		raise ValidationError("Username is already taken")
 
 @app.context_processor
@@ -150,6 +150,13 @@ class User(db.Model, UserMixin):
 		return False
 	def get_id(self):
 		return str(self.user_id)
+
+	@classmethod
+	def full_login(self, given_username, given_password):
+		user = User.query.filter_by(username=given_username).first()
+		if user and user.login(given_password):
+			return True
+		return False
 
 	# @hybrid_method
 	# def comment_karma(self):
@@ -600,8 +607,8 @@ def login_form():
 
 @app.route("/login", methods=["post"])
 def login():
-	user = User.query.filter_by(username=request.form["username"]).first()
-	if user and user.login(request.form["password"]):
+	success = User.full_login(request.form["username"], request.form["password"])
+	if success:
 		return redirect("/")
 	else:
 		return render_template("no-login.html")
@@ -626,7 +633,9 @@ def register_page():
 		user = User(form.username.data, form.password.data)
 		db.session.add(user)
 		db.session.commit()
-		return redirect("/login")
+		user.login(form.password.data)
+		flash("account created successfully")
+		return redirect("/")
 	return render_template("register.html", form=form)
 
 @app.route("/submit", methods=["get", "post"])
