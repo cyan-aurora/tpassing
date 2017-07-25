@@ -586,6 +586,14 @@ def about_feedback():
 def about_links():
 	return render_template("about/links.html")
 
+@app.route("/about/donate")
+def donate():
+	return render_template("about/donate.html")
+
+@app.route("/about/reddit")
+def reddit_proof():
+	return render_template("about/reddit.html")
+
 @app.route("/login", methods=["get"])
 def login_form():
 	return render_template("login-form.html")
