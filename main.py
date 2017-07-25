@@ -521,7 +521,23 @@ def send_votes(post_id):
 # So you can still access about when logged in
 @app.route("/about")
 def about():
-	return render_template("about.html")
+	return render_template("about/index.html")
+
+@app.route("/about/security")
+def about_security():
+	return render_template("about/security.html")
+
+@app.route("/about/coolness")
+def about_coolness():
+	return render_template("about/coolness.html")
+
+@app.route("/about/feedback")
+def about_feedback():
+	return render_template("about/feedback.html")
+
+@app.route("/about/links")
+def about_links():
+	return render_template("about/links.html")
 
 @app.route("/login", methods=["get"])
 def login_form():
@@ -574,10 +590,6 @@ def submission_page():
 		db.session.commit()
 		return redirect("/post/" + str(post.post_id))
 	return render_template("submit.html", form=form)
-
-@app.route("/why-links")
-def why_links():
-	return render_template("why-links.html")
 
 @app.route("/debug")
 def debug_page():

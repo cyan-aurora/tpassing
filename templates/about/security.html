@@ -1,0 +1,25 @@
+{% extends "standard.html" %}
+{% block main %}
+
+	<h2>security</h2>
+
+	<p>security is the number one goal of this site, based on the fundamental
+	issue with the task at hand: we want some internet strangers to be able to
+	see us, but we don't want other internet strangers to be able to see us.</p>
+
+	<p>the fundamental security addition in tpassing is post expiration. we
+	don't want our posts to live forever, we just want to get feedback and then
+	have them disappear forever.</p>
+
+	<p>the url of your post is never displayed on the site. using a
+	redirect function, it can be accessed, but never seen. then when the post
+	expires, it is gone forever. there is no way to prove connection between the
+	link and tpassing. unfortunately, that's the best we can do, we cannot
+	prevent an image from being copied (anything can be
+	screenshotted). <a href="/about/links">read more</a></p>
+
+	<p>to prevent troll posts, we sort posts based on the user's comment karma.
+	(this is actually a side effect of <a href="/about/coolness">coolness</a>.
+	<a href="https://xkcd.com/810/">"but what if trolls produce lots of positive feedback?"</a></p>
+
+{% endblock %}
