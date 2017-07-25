@@ -187,12 +187,20 @@ class Post(db.Model):
 	@classmethod
 	def coolest(cls):
 		# This is a SQL mess (TODO) to compute the following formula:
-		# 2 * `commenting rep` - `total upvotes on comments on all own posts` - `total upvotes on comments on this post`
+		# `commenting rep` + `post quality score` - `total upvotes on comments on all own posts` - `total upvotes on comments on this post`
 		# This makes it so giving good feedback makes your post higher up,
 		# new posts appear higher up,
 		# and people who post often appear lower down (unless they comment more often)
+		weights = {
+			# post_quality is 1/2 as important as trad LD coolness
+			"post_quality" : 1,
+			"feedback_given" : 2,
+			"feedback_received" : -1,
+			# post_received's purpose is for when you have multiple posts
+			"post_received" : -1,
+		}
 		labeled_user_posts = db.aliased(User.posts, name="user_posts")
-		# The amount of positive feedback the poster has recieved
+		# The amount of positive feedback the poster has received
 		user_post_comments_up = (
 			db.session.query(
 				Post.post_id,
@@ -201,7 +209,7 @@ class Post(db.Model):
 			.outerjoin(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-quality") & (Vote.vote_value == "up"))
 			.group_by(Post)
 			.subquery())
-		# The amount of positive feedback /this post/ has recieved
+		# The amount of positive feedback /this post/ has received
 		post_comments_up = (
 			db.session.query(
 				Post.post_id,
@@ -228,12 +236,35 @@ class Post(db.Model):
 			.outerjoin(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-quality") & (Vote.vote_value == "down"))
 			.group_by(Post)
 			.subquery())
+		# The amount of positive post quality votes
+		post_up = (
+			db.session.query(
+				Post.post_id,
+				db.func.count(Vote.vote_id).label("count"))
+			.outerjoin(Vote, (Vote.item_on_id == Post.post_id) & (Vote.vote_type == "post-quality") & (Vote.vote_value == "up"))
+			.group_by(Post)
+			.subquery())
+		# The amount of negative post quality votes
+		post_down = (
+			db.session.query(
+				Post.post_id,
+				db.func.count(Vote.vote_id).label("count"))
+			.outerjoin(Vote, (Vote.item_on_id == Post.post_id) & (Vote.vote_type == "post-quality") & (Vote.vote_value == "down"))
+			.group_by(Post)
+			.subquery())
 		return (Post.query
 			.join(user_post_comments_up, Post.post_id == user_post_comments_up.c.post_id)
 			.join(post_comments_up, Post.post_id == post_comments_up.c.post_id)
 			.join(user_comments_up, Post.post_id == user_comments_up.c.post_id)
 			.join(user_comments_down, Post.post_id == user_comments_down.c.post_id)
-			.order_by((2 * (user_comments_up.c.count - user_comments_down.c.count) - user_post_comments_up.c.count - post_comments_up.c.count).desc()))
+			.join(post_up, Post.post_id == post_up.c.post_id)
+			.join(post_down, Post.post_id == post_down.c.post_id)
+			.order_by((
+					+ weights["post_quality"] * (post_up.c.count - post_down.c.count)
+					+ weights["feedback_given"] * (user_comments_up.c.count - user_comments_down.c.count)
+					+ weights["feedback_received"] * user_post_comments_up.c.count
+					+ weights["post_received"] * post_comments_up.c.count)
+				.desc()))
 
 class Comment(db.Model):
 	comment_id = db.Column(db.Integer, primary_key=True)
