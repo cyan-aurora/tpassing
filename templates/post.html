@@ -4,8 +4,6 @@
 	{{ super() }}
 	<script>
 
-		// TODO: Make this not horribly ugly code
-
 		function checkVotes() {
 
 			response = JSON.parse(this.responseText);
@@ -64,7 +62,7 @@
 
 			// Make all grouped links unclicked...
 			$("." + id + "." + type +               ".link").css({color: unvotedColor});
-			// ... and make clicked one appear clicked (TODO: Pick color)
+			// ... and make clicked one appear clicked
 			if (value) {
 				$("." + id + "." + type + "." + value + ".link").css({color:   votedColor});
 			}
@@ -126,6 +124,8 @@
 
 		</div>
 	{% endfor %}
-	<p>please report anything as much as tone-deaf to <a href="mailto:cyanauroratp@gmail.com">cyanauroratp@gmail.com</a>. I'm working on implementing a report feature.</p>
+	<p>please report anything as much as tone-deaf to
+	<a href="mailto:cyanauroratp@gmail.com">cyanauroratp@gmail.com</a>. I'm
+	working on implementing a report feature.</p>
 </div>
 {% endblock %}

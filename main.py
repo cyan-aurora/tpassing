@@ -293,7 +293,6 @@ class Comment(db.Model):
 	@classmethod
 	def get_by_id(cls, comment_id):
 		comment = cls.query.filter_by(comment_id=int(comment_id)).first()
-		# TODO: Check for expiration?
 		return comment
 
 class Vote(db.Model):

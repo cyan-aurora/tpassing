@@ -21,7 +21,8 @@ there's no real issue.
 
 ## [Contributing][1]
 
-Interested? I'd love if you [reported bugs][2], [contributed to the source][1], or [donated](https://tpassing.com/about/donate) to the project.
+Interested? I'd love if you [reported bugs][2], [contributed to the source][1],
+or [donated](https://tpassing.com/about/donate) to the project.
 
 [1]: https://github.com/cyan-aurora/transpassing/blob/master/CONTRIBUTING.md
 [2]: https://github.com/cyan-aurora/transpassing/issues
