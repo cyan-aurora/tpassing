@@ -80,7 +80,7 @@
 {% endmacro %}
 
 {% block main %}
-	{% if post.url %}<a style="font-size: 20px;" href="/post/{{ post.post_id }}/link">link</a>{% endif %}
+	{% if post.url %}<a class="bigger" href="/post/{{ post.post_id }}/link">link</a>{% endif %}
 	<p>user: {{ post.user.username }}</p>
 	<p>target gender: {{ post.gender }}</p>
 	{% if post.description %}

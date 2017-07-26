@@ -119,6 +119,10 @@ table a:visited {
 	color: #a222a5;
 }
 
+.bigger {
+	font-size: 20px;
+}
+
 .logout {
 	font-size: 20px;
 }
@@ -183,7 +187,7 @@ textarea {
 }
 
 .full-form {
-	width: 100%;
+	width: 90%;
 }
 .full-form input, textarea {
 	display: block;
@@ -192,4 +196,7 @@ textarea {
 }
 .full-form textarea {
 	height: 80px;
+}
+.full-form img {
+	max-width: 90%;
 }
