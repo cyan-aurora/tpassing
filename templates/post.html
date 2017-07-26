@@ -80,7 +80,6 @@
 {% endmacro %}
 
 {% block main %}
-<div class="wrap">
 	{% if post.url %}<a href="/post/{{ post.post_id }}/link">link</a>{% endif %}
 	<p>user: {{ post.user.username }}</p>
 	<p>target gender: {{ post.gender }}</p>
@@ -127,5 +126,4 @@
 	<p>please report anything as much as tone-deaf to
 	<a href="mailto:cyanauroratp@gmail.com">cyanauroratp@gmail.com</a>. I'm
 	working on implementing a report feature.</p>
-</div>
 {% endblock %}

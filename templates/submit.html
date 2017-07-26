@@ -1,22 +1,20 @@
 {% extends "standard.html" %}
 
 {% block main %}
-	<div class="wrap">
-		<form class="full-form" action="/submit" method="post">
-			<label for="url">
-				link to an image or other content.<br />
-				try <a href="https://imgur.com/upload">imgur</a>
-				- no login required - but don't "Share to community."<br />
-				<a href="/why-links">read more</a> about why I don't host images.<br /><br />
-			</label>
-			{{ render_field(form.url)     }}
-			{{ render_field(form.gender)  }}
-			{{ render_field(form.text)    }}
-			<p><a href="https://en.support.wordpress.com/markdown-quick-reference/">formatting help</a> (markdown)</p>
-			{{ render_field(form.expires) }}
-			<img src="/captcha" alt="captcha" /><br />
-			{{ render_field(form.captcha) }}
-			<input type="submit" value="submit" />
-		</form>
-	</div>
+	<form class="full-form" action="/submit" method="post">
+		<label for="url">
+			link to an image or other content.<br />
+			try <a href="https://imgur.com/upload">imgur</a>
+			- no login required - but don't "Share to community."<br />
+			<a href="/why-links">read more</a> about why I don't host images.<br /><br />
+		</label>
+		{{ render_field(form.url)     }}
+		{{ render_field(form.gender)  }}
+		{{ render_field(form.text)    }}
+		<p><a href="https://en.support.wordpress.com/markdown-quick-reference/">formatting help</a> (markdown)</p>
+		{{ render_field(form.expires) }}
+		<img src="/captcha" alt="captcha" /><br />
+		{{ render_field(form.captcha) }}
+		<input type="submit" value="submit" />
+	</form>
 {% endblock %}
