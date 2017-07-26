@@ -41,6 +41,12 @@ a {
 	transition: opacity 0.1s;
 }
 
+@media screen and (max-width: 1000px) {
+	.exit-floater {
+		display: none;
+	}
+}
+
 .exit-floater:hover {
 	opacity: 0.8;
 }
