@@ -388,10 +388,21 @@ class View(db.Model):
 	def __repr__(self):
 		return "<View %r by %r>" % (self.post_id, self.user_id)
 	@classmethod
+	def get(cls, post_id):
+		view_query = cls.query.filter_by(
+			user_id = current_user.user_id,
+			post_id = post_id)
+		return view_query.first()
+	@classmethod
 	def view(cls, post_id):
-		entry = cls(current_user.user_id, post_id)
-		db.session.add(entry)
-		db.session.commit()
+		view = cls.get(post_id)
+		if view:
+			return True
+		else:
+			entry = cls(current_user.user_id, post_id)
+			db.session.add(entry)
+			db.session.commit()
+			return False
 
 
 class Login_Form(Form):
