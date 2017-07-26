@@ -165,6 +165,7 @@ textarea {
 
 .big-form {
 	display: block;
+	width: 80%;
 	max-width: 400px;
 	margin: 0 auto;
 	float: none;
@@ -172,10 +173,13 @@ textarea {
 }
 .big-form input, textarea {
 	margin-bottom: 20px;
-	width: 375px;
+	width: 100%;
 }
 .big-form input[type="submit"] {
-	width: 400px;
+	width: 100%;
+}
+.big-form img {
+	width: 100%;
 }
 
 .full-form {
