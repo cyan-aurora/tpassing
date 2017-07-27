@@ -18,9 +18,11 @@ import datetime
 import json
 from functools import wraps
 from random import SystemRandom
+from urllib.parse import urlparse, urljoin
 
 from captcha.image import ImageCaptcha
 
+import flask
 from flask import Flask, request, session, render_template, redirect, send_file, make_response, current_app, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user, UserMixin
@@ -60,6 +62,11 @@ def username_unique(form, field):
 	username = field.data
 	if User.query.filter(User.username == username).first() is not None:
 		raise ValidationError("Username is already taken")
+
+def is_safe_url(target):
+	ref_url = urlparse(request.host_url)
+	test_url = urlparse(urljoin(request.host_url, target))
+	return test_url.scheme in ("http", "https") and ref_url.netloc == test_url.netloc
 
 @app.context_processor
 def add_login_form():
@@ -613,17 +620,19 @@ def donate():
 def reddit_proof():
 	return render_template("about/reddit.html")
 
-@app.route("/login", methods=["get"])
-def login_form():
-	return render_template("login-form.html")
-
-@app.route("/login", methods=["post"])
+@app.route("/login", methods=["get", "post"])
 def login():
-	success = User.full_login(request.form["username"], request.form["password"])
-	if success:
-		return redirect("/")
-	else:
-		return render_template("no-login.html")
+	form = Login_Form(request.form)
+	if request.method == "POST" and form.validate():
+		success = User.full_login(request.form["username"], request.form["password"])
+		if success:
+			next_url = request.args.get("next")
+			if not is_safe_url(next_url):
+				flask.abort(400)
+			return redirect(next_url or "/")
+		else:
+			return render_template("no-login.html")
+	return render_template("login-form.html", login_form=form)
 
 @app.route("/logout")
 def logout():

@@ -10,6 +10,6 @@
 	<h2 style="text-align: center;">sign in</h2>
 	<p style="text-align: center;">you need to sign in to view this page</p>
 	<div class="big-form">
-		{% include "login-template.html" %}
+		{{ login_form_macro(True) }}
 	</div>
 {% endblock %}
