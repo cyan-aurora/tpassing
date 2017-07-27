@@ -412,7 +412,9 @@ class Login_Form(Form):
 	], render_kw={"placeholder": "username"})
 	password = PasswordField("", [
 		validators.DataRequired(),
-		validators.Length(min=10, max=60)
+		# We allow minimum 6 in the login form because we previously allowed
+		# password of 6 length in registration
+		validators.Length(min=6, max=60)
 	], render_kw={"placeholder": "password"})
 
 class Submit_Form(Form):
@@ -438,7 +440,7 @@ class Registration_Form(Form):
 	], render_kw={"placeholder": "username"})
 	password = PasswordField("", [
 		validators.DataRequired(),
-		validators.Length(min=6, max=60)
+		validators.Length(min=8, max=200)
 	], render_kw={"placeholder": "password"})
 	confirm = PasswordField("", [
 		validators.EqualTo("password", "Check that the passwords match")
