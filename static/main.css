@@ -1,12 +1,16 @@
 * {
 	padding: 0;
 	margin: 0;
+	box-sizing: border-box;
 }
 
 body {
 	font-family: sans-serif;
 	color: #110310;
 	background-color: #f4f9fe;
+	background: linear-gradient(180deg, #f4f9fe, #d4d4de);
+	min-height: 100vh;
+	padding-top: 7em;
 }
 
 h1 {
@@ -33,12 +37,17 @@ a {
 
 .exit-floater {
 	position: fixed;
-	top: 80px;
+	top: 5em;
 	right: 20px;
 	padding: 20px;
 	background-color: #110310;
 	opacity: 0.3;
-	transition: opacity 0.1s;
+	color: #f4f9fe;
+	transition: 0.2s;
+	border-bottom-left-radius: 10px;
+	border-bottom-right-radius: 10px;
+	box-shadow: 0px 0px 5px #888;
+	text-decoration: none;
 }
 
 @media screen and (max-width: 1000px) {
@@ -49,6 +58,8 @@ a {
 
 .exit-floater:hover {
 	opacity: 0.8;
+	background-color: #FF0000;
+	color: #110310;
 }
 
 .wrap {
@@ -58,24 +69,30 @@ a {
 }
 
 .top-bar {
+	width: 100%;
+	height: 5em;
+	position: fixed;
+	top: 0px;
 	padding: 20px;
 	margin-bottom: 20px;
 	background-color: #74b1dc;
+	border-bottom: 1px solid #444;
+	box-shadow: 0px 0px 5px #888;
 }
 
-.top-bar:after {
-	content: "";
-	display: block;
-	clear: both;
-}
 
 .top-bar h1 {
 	margin: 0;
-	font-size: 30px;
+	padding: 0;
+	font-size: 2em;
 }
 
-h1 a {
+.top-bar h1 a {
 	text-decoration: none;
+	color: #f4f9fe;
+	text-shadow: 0px 2px 5px #222;
+	margin: 0;
+	font-family: "Fascinate Inline", cursive;
 }
 
 .centered-bar {
@@ -94,6 +111,9 @@ h1 a {
 table {
 	width: 100%;
 	border-spacing: 0;
+	border: 1px solid #444;
+	border-radius: 5px;
+	box-shadow: 0px 0px 5px #888;
 }
 tr {
 	cursor: pointer;
@@ -120,7 +140,7 @@ table a:visited {
 }
 
 .bigger {
-	font-size: 20px;
+	font-size: 1.5em;
 }
 
 .logout {
