@@ -1,6 +1,11 @@
-{% macro render_field(field) %}
-	{{ field.label }}
+{% macro render_field(field, label_after) %}
+	{% if not label_after %}
+		{{ field.label }}
+	{% endif %}
 	{{ field(**kwargs)|safe }}
+	{% if label_after %}
+		{{ field.label }}
+	{% endif %}
 	{% if field.errors %}
 		<ul class="flashes">
 			{% for error in field.errors %}

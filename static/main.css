@@ -194,6 +194,12 @@ textarea {
 	margin: 20px 0;
 	width: 100%;
 }
+.full-form input[type="checkbox"] {
+	display: inline;
+	width: auto;
+	margin: 0;
+	margin-right: 10px;
+}
 .full-form textarea {
 	height: 80px;
 }

@@ -27,7 +27,7 @@ from flask import Flask, request, session, render_template, redirect, send_file,
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user, UserMixin
 from flask_principal import Principal, Identity, AnonymousIdentity, identity_changed, Permission, ActionNeed
-from wtforms import Form, StringField, PasswordField, TextAreaField, validators, ValidationError
+from wtforms import Form, StringField, PasswordField, TextAreaField, BooleanField, validators, ValidationError
 from flaskext.markdown import Markdown
 
 secure_config = configparser.ConfigParser()
@@ -170,23 +170,27 @@ class User(db.Model, UserMixin):
 	# 	return 0
 
 class Post(db.Model):
-	post_id     = db.Column(db.Integer, primary_key=True)
-	url         = db.Column(db.String(150))
-	gender      = db.Column(db.String(50))
-	description = db.Column(db.Text)
-	created     = db.Column(db.DateTime, default=db.func.current_timestamp())
-	expires     = db.Column(db.DateTime)
-	user_id     = db.Column(db.Integer, db.ForeignKey("user.user_id"))
-	user        = db.relationship("User", back_populates="posts")
-	comments    = db.relationship("Comment", lazy="dynamic", cascade="all, delete")
-	views       = db.relationship("View", lazy="dynamic", cascade="all, delete")
+	post_id         = db.Column(db.Integer, primary_key=True)
+	url             = db.Column(db.String(150))
+	gender          = db.Column(db.String(50))
+	description     = db.Column(db.Text)
+	created         = db.Column(db.DateTime, default=db.func.current_timestamp())
+	expires         = db.Column(db.DateTime)
+	require_captcha = db.Column(db.Boolean, default=False)
+	require_trust   = db.Column(db.Boolean, default=False)
+	user_id         = db.Column(db.Integer, db.ForeignKey("user.user_id"))
+	user            = db.relationship("User", back_populates="posts")
+	comments        = db.relationship("Comment", lazy="dynamic", cascade="all, delete")
+	views           = db.relationship("View", lazy="dynamic", cascade="all, delete")
 
-	def __init__(self, user_id, url, gender, description, days_to_expiration):
-		self.user_id     = user_id
-		self.url         = url
-		self.gender      = gender
-		self.description = description
-		self.expires     = datetime.datetime.now() + datetime.timedelta(days = int(days_to_expiration))
+	def __init__(self, user_id, url, gender, description, days_to_expiration, require_captcha, require_trust):
+		self.user_id         = user_id
+		self.url             = url
+		self.gender          = gender
+		self.description     = description
+		self.expires         = datetime.datetime.now() + datetime.timedelta(days=int(days_to_expiration))
+		self.require_captcha = require_captcha
+		self.require_trust   = require_trust
 
 	def __repr__(self):
 		return "<Post %r by %r>" % (self.post_id, self.user.username)
@@ -304,7 +308,7 @@ class Comment(db.Model):
 
 class Vote(db.Model):
 	# Though all other fields will never be the same, each one could be duplicate
-	vote_id = db.Column(db.Integer, primary_key = True)
+	vote_id = db.Column(db.Integer, primary_key=True)
 	vote_type = db.Column(db.Enum("comment-agree", "comment-quality", "post-passes", "post-quality"))
 	item_on_id = db.Column(db.Integer) # It's a foreignkey but can't specify because could be from any class
 	user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"))
@@ -385,7 +389,7 @@ class Vote(db.Model):
 			.subquery())
 
 class View(db.Model):
-	view_id = db.Column(db.Integer, primary_key = True)
+	view_id = db.Column(db.Integer, primary_key=True)
 	user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"))
 	post_id = db.Column(db.Integer, db.ForeignKey("post.post_id"))
 	post    = db.relationship("Post", back_populates="views")
@@ -428,13 +432,15 @@ class Submit_Form(Form):
 	url = StringField("", [
 		validators.URL(),
 		validators.Optional()
-	], render_kw={"placeholder": "link"})
+	], render_kw={"placeholder": "link (optional)"})
 	gender = StringField("", [
 	], render_kw={"placeholder": "target gender (optional)"})
 	text = TextAreaField("", [
-	], render_kw={"placeholder": "description / any additional text"})
+	], render_kw={"placeholder": "description / any additional text (optional)"})
 	expires = StringField("days to expiration: ", [
 	], render_kw={"placeholder": "days"}, default=30)
+	require_captcha = BooleanField("require a captcha to view this post (prevent robots from accessing)")
+	require_trust = BooleanField("require an upvoted post or comment to view this post (prevent trolls from accessing)")
 	captcha = StringField("", [
 		check_captcha
 	], render_kw={"placeholder": "enter the text above"})
@@ -493,12 +499,60 @@ def captcha_image():
 	response.headers['Expires'] = '-1'
 	return response
 
-@app.route("/post/<post_id>")
+@app.route("/post/<post_id>", methods=["get", "post"])
 @login_required
 def view_post(post_id):
 	post = Post.get_by_id(post_id)
 	if post:
-		View.view(post_id)
+		been_viewed = View.get(post_id)
+		# If we require trust, and this isn't our post, we check
+		if post.require_trust and not been_viewed and post.user_id != current_user.user_id:
+			# Requiring trust means we've provided constructive feedback, or a positive post
+			feedback_up = (db.session.query(
+					db.func.count(Vote.vote_id).label("count"))
+				.filter(User.user_id == current_user.user_id)
+				.outerjoin(User.comments)
+				.outerjoin(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-quality") & (Vote.vote_value == "up"))
+				).first().count
+			feedback_down = (db.session.query(
+					db.func.count(Vote.vote_id).label("count"))
+				.filter(User.user_id == current_user.user_id)
+				.outerjoin(User.comments)
+				.outerjoin(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-quality") & (Vote.vote_value == "up"))
+				).first().count
+			posts_up = (db.session.query(
+					db.func.count(Vote.vote_id).label("count"))
+				.filter(User.user_id == current_user.user_id)
+				.outerjoin(User.posts)
+				.outerjoin(Vote, (Vote.item_on_id == Post.post_id) & (Vote.vote_type == "post-quality") & (Vote.vote_value == "up"))
+				).first().count
+			posts_down = (db.session.query(
+					db.func.count(Vote.vote_id).label("count"))
+				.filter(User.user_id == current_user.user_id)
+				.outerjoin(User.posts)
+				.outerjoin(Vote, (Vote.item_on_id == Post.post_id) & (Vote.vote_type == "post-quality") & (Vote.vote_value == "down"))
+				).first().count
+			feedback_required = config.getint("Trust", "feedback_margin_required")
+			posts_required = config.getint("Trust", "post_margin_required")
+			if feedback_up - feedback_down >= feedback_required or posts_up - posts_down >= posts_required:
+				# We're good, move on to the next confirmation step
+				pass
+			else:
+				flash("sorry, but this poster has requested that only users with an upvoted post or comment see their post")
+				return redirect("/browse")
+		# If we require a captcha, and we've not already solved one, we check
+		if post.require_captcha and not been_viewed:
+			if request.method == "POST":
+				if captcha.check(request.form["answer"]):
+					# Continue on with the post-getting process
+					pass
+				else:
+					flash("sorry, the captcha answer was incorrect")
+					return render_template("captcha.html")
+			else:
+				return render_template("captcha.html")
+		if not been_viewed:
+			View.view(post_id)
 		max_comments = 1000
 		# We sort comments by (quality difference) + c * (agreement difference)
 		# c: The percent as valuable agreement is to quality in the comment sorting algorithm
@@ -669,7 +723,9 @@ def submission_page():
 				form.url.data,
 				form.gender.data,
 				form.text.data,
-				form.expires.data
+				form.expires.data,
+				form.require_captcha.data,
+				form.require_trust.data,
 				)
 		db.session.add(post)
 		db.session.commit()
