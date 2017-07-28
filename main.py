@@ -248,6 +248,7 @@ class Post(db.Model):
 			"post_quality" : 1,
 			"feedback_given" : 2,
 			"feedback_received" : -1,
+			"post_passing_received" : -0.5,
 			# post_received's purpose is for when you have multiple posts
 			"post_received" : -1,
 		}
@@ -288,6 +289,13 @@ class Post(db.Model):
 			.outerjoin(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-quality") & (Vote.vote_value == "down"))
 			.group_by(Post)
 			.subquery())
+		# The amount of passing votes the post has received, regardless of value
+		post_passing_votes = (
+			db.session.query(
+				Post.post_id,
+				db.func.count(Vote.vote_id).label("count"))
+			.outerjoin(Vote, (Vote.item_on_id == Post.post_id) & (Vote.vote_type == "post-passes"))
+			.subquery())
 		# The amount of positive post quality votes
 		post_up = (
 			db.session.query(
@@ -310,12 +318,14 @@ class Post(db.Model):
 			.join(post_comments_up, Post.post_id == post_comments_up.c.post_id)
 			.join(user_comments_up, Post.post_id == user_comments_up.c.post_id)
 			.join(user_comments_down, Post.post_id == user_comments_down.c.post_id)
+			.join(post_passing_votes, Post.post_id == post_passing_votes.c.post_id)
 			.join(post_up, Post.post_id == post_up.c.post_id)
 			.join(post_down, Post.post_id == post_down.c.post_id)
 			.order_by((
 					+ weights["post_quality"] * (post_up.c.count - post_down.c.count)
 					+ weights["feedback_given"] * (user_comments_up.c.count - user_comments_down.c.count)
 					+ weights["feedback_received"] * user_post_comments_up.c.count
+					+ weights["post_passing_received"] * post_passing_votes.c.count
 					+ weights["post_received"] * post_comments_up.c.count)
 				.desc()))
 
