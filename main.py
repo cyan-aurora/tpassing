@@ -68,6 +68,40 @@ def is_safe_url(target):
 	test_url = urlparse(urljoin(request.host_url, target))
 	return test_url.scheme in ("http", "https") and ref_url.netloc == test_url.netloc
 
+def is_trusted_user():
+	# Requiring trust means we've provided constructive feedback, or a positive post
+	feedback_up = (db.session.query(
+			db.func.count(Vote.vote_id).label("count"))
+		.filter(User.user_id == current_user.user_id)
+		.outerjoin(User.comments)
+		.outerjoin(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-quality") & (Vote.vote_value == "up"))
+		).first().count
+	feedback_down = (db.session.query(
+			db.func.count(Vote.vote_id).label("count"))
+		.filter(User.user_id == current_user.user_id)
+		.outerjoin(User.comments)
+		.outerjoin(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-quality") & (Vote.vote_value == "up"))
+		).first().count
+	posts_up = (db.session.query(
+			db.func.count(Vote.vote_id).label("count"))
+		.filter(User.user_id == current_user.user_id)
+		.outerjoin(User.posts)
+		.outerjoin(Vote, (Vote.item_on_id == Post.post_id) & (Vote.vote_type == "post-quality") & (Vote.vote_value == "up"))
+		).first().count
+	posts_down = (db.session.query(
+			db.func.count(Vote.vote_id).label("count"))
+		.filter(User.user_id == current_user.user_id)
+		.outerjoin(User.posts)
+		.outerjoin(Vote, (Vote.item_on_id == Post.post_id) & (Vote.vote_type == "post-quality") & (Vote.vote_value == "down"))
+		).first().count
+	feedback_required = config.getint("Trust", "feedback_margin_required")
+	posts_required = config.getint("Trust", "post_margin_required")
+	if feedback_up - feedback_down >= feedback_required or posts_up - posts_down >= posts_required:
+		# We're good, move on to the next confirmation step
+		return True
+	else:
+		return False
+
 @app.context_processor
 def add_login_form():
 	return { "login_form" : Login_Form(request.form) }
@@ -507,35 +541,7 @@ def view_post(post_id):
 		been_viewed = View.get(post_id)
 		# If we require trust, and this isn't our post, we check
 		if post.require_trust and not been_viewed and post.user_id != current_user.user_id:
-			# Requiring trust means we've provided constructive feedback, or a positive post
-			feedback_up = (db.session.query(
-					db.func.count(Vote.vote_id).label("count"))
-				.filter(User.user_id == current_user.user_id)
-				.outerjoin(User.comments)
-				.outerjoin(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-quality") & (Vote.vote_value == "up"))
-				).first().count
-			feedback_down = (db.session.query(
-					db.func.count(Vote.vote_id).label("count"))
-				.filter(User.user_id == current_user.user_id)
-				.outerjoin(User.comments)
-				.outerjoin(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-quality") & (Vote.vote_value == "up"))
-				).first().count
-			posts_up = (db.session.query(
-					db.func.count(Vote.vote_id).label("count"))
-				.filter(User.user_id == current_user.user_id)
-				.outerjoin(User.posts)
-				.outerjoin(Vote, (Vote.item_on_id == Post.post_id) & (Vote.vote_type == "post-quality") & (Vote.vote_value == "up"))
-				).first().count
-			posts_down = (db.session.query(
-					db.func.count(Vote.vote_id).label("count"))
-				.filter(User.user_id == current_user.user_id)
-				.outerjoin(User.posts)
-				.outerjoin(Vote, (Vote.item_on_id == Post.post_id) & (Vote.vote_type == "post-quality") & (Vote.vote_value == "down"))
-				).first().count
-			feedback_required = config.getint("Trust", "feedback_margin_required")
-			posts_required = config.getint("Trust", "post_margin_required")
-			if feedback_up - feedback_down >= feedback_required or posts_up - posts_down >= posts_required:
-				# We're good, move on to the next confirmation step
+			if is_trusted_user():
 				pass
 			else:
 				flash("sorry, but this poster has requested that only users with an upvoted post or comment see their post")
@@ -577,6 +583,25 @@ def view_post(post_id):
 def view_link(post_id):
 	post = Post.get_by_id(post_id)
 	if post:
+		been_viewed = View.get(post_id)
+		# If we require trust, and this isn't our post, we check
+		if post.require_trust and not been_viewed and post.user_id != current_user.user_id:
+			if is_trusted_user():
+				pass
+			else:
+				flash("sorry, but this poster has requested that only users with an upvoted post or comment see their post")
+				return redirect("/browse")
+		# If we require a captcha, and we've not already solved one, we check
+		if post.require_captcha and not been_viewed:
+			if request.method == "POST":
+				if captcha.check(request.form["answer"]):
+					# Continue on with the post-getting process
+					pass
+				else:
+					flash("sorry, the captcha answer was incorrect")
+					return render_template("captcha.html")
+			else:
+				return render_template("captcha.html")
 		return redirect(post.url)
 	else:
 		return render_template("removed.html")
