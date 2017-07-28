@@ -295,6 +295,7 @@ class Post(db.Model):
 				Post.post_id,
 				db.func.count(Vote.vote_id).label("count"))
 			.outerjoin(Vote, (Vote.item_on_id == Post.post_id) & (Vote.vote_type == "post-passes"))
+			.group_by(Post)
 			.subquery())
 		# The amount of positive post quality votes
 		post_up = (
