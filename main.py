@@ -578,7 +578,7 @@ def view_post(post_id):
 	else:
 		return render_template("removed.html")
 
-@app.route("/post/<post_id>/link")
+@app.route("/post/<post_id>/link", methods=["get", "post"])
 @login_required
 def view_link(post_id):
 	post = Post.get_by_id(post_id)
