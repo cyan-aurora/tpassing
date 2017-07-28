@@ -754,6 +754,7 @@ def submission_page():
 				)
 		db.session.add(post)
 		db.session.commit()
+		flash('remember, <a href="/about/coolness">give feedback; get feedback</a>. make sure to leave some comments in order to receive your own.')
 		return redirect("/post/" + str(post.post_id))
 	return render_template("submit.html", form=form)
 
