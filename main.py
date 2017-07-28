@@ -243,15 +243,6 @@ class Post(db.Model):
 		# This makes it so giving good feedback makes your post higher up,
 		# new posts appear higher up,
 		# and people who post often appear lower down (unless they comment more often)
-		weights = {
-			# post_quality is 1/2 as important as trad LD coolness
-			"post_quality" : 1,
-			"feedback_given" : 2,
-			"feedback_received" : -1,
-			"post_passing_received" : -0.5,
-			# post_received's purpose is for when you have multiple posts
-			"post_received" : -1,
-		}
 		labeled_user_posts = db.aliased(User.posts, name="user_posts")
 		# The amount of positive feedback the poster has received
 		user_post_comments_up = (
@@ -323,11 +314,11 @@ class Post(db.Model):
 			.join(post_up, Post.post_id == post_up.c.post_id)
 			.join(post_down, Post.post_id == post_down.c.post_id)
 			.order_by((
-					+ weights["post_quality"] * (post_up.c.count - post_down.c.count)
-					+ weights["feedback_given"] * (user_comments_up.c.count - user_comments_down.c.count)
-					+ weights["feedback_received"] * user_post_comments_up.c.count
-					+ weights["post_passing_received"] * post_passing_votes.c.count
-					+ weights["post_received"] * post_comments_up.c.count)
+					+ config.getfloat("Coolness", "post_quality")          * (post_up.c.count - post_down.c.count)
+					+ config.getfloat("Coolness", "feedback_given")        * (user_comments_up.c.count - user_comments_down.c.count)
+					+ config.getfloat("Coolness", "feedback_received")     * user_post_comments_up.c.count
+					+ config.getfloat("Coolness", "post_passing_received") * post_passing_votes.c.count
+					+ config.getfloat("Coolness", "post_received")         * post_comments_up.c.count)
 				.desc()))
 
 class Comment(db.Model):
