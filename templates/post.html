@@ -90,7 +90,7 @@
 		<div class="user-entered">{{ post.description|e|markdown }}</div>
 	{% endif %}
 	{% if current_user.user_id == post.user_id %}
-		<p><a href="/post/{{ post.post_id }}/delete">delete</a></p>
+		<p><a href="/post/{{ post.post_id }}/edit">edit</a> | <a href="/post/{{ post.post_id }}/delete">delete</a></p>
 	{% endif %}
 	<span>
 		{{ vote_link(post.post_id, "post-passes", "up", "passes", False, post) }}

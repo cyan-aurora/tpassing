@@ -27,7 +27,7 @@ from flask import Flask, request, session, render_template, redirect, send_file,
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user, UserMixin
 from flask_principal import Principal, Identity, AnonymousIdentity, identity_changed, Permission, ActionNeed
-from wtforms import Form, StringField, PasswordField, TextAreaField, BooleanField, validators, ValidationError
+from wtforms import Form, StringField, PasswordField, TextAreaField, BooleanField, DateField, validators, ValidationError
 from flaskext.markdown import Markdown
 
 secure_config = configparser.ConfigParser()
@@ -217,12 +217,12 @@ class Post(db.Model):
 	comments        = db.relationship("Comment", lazy="dynamic", cascade="all, delete")
 	views           = db.relationship("View", lazy="dynamic", cascade="all, delete")
 
-	def __init__(self, user_id, url, gender, description, days_to_expiration, require_captcha, require_trust):
+	def __init__(self, user_id, url, gender, description, expires, require_captcha, require_trust):
 		self.user_id         = user_id
 		self.url             = url
 		self.gender          = gender
 		self.description     = description
-		self.expires         = datetime.datetime.now() + datetime.timedelta(days=int(days_to_expiration))
+		self.expires         = expires
 		self.require_captcha = require_captcha
 		self.require_trust   = require_trust
 
@@ -473,8 +473,9 @@ class Submit_Form(Form):
 	], render_kw={"placeholder": "target gender (optional)"})
 	text = TextAreaField("", [
 	], render_kw={"placeholder": "description / any additional text (optional)"})
-	expires = StringField("days to expiration: ", [
+	expires = StringField("days to expiration:", [
 	], render_kw={"placeholder": "days"}, default=30)
+	expires_date = DateField("expiration date:")
 	require_captcha = BooleanField("require a captcha to view this post (prevent robots from accessing)")
 	require_trust = BooleanField("require an upvoted post or comment to view this post (prevent trolls from accessing)")
 	captcha = StringField("", [
@@ -579,6 +580,33 @@ def view_post(post_id):
 		return render_template("post.html", post=post, comments=comments)
 	else:
 		return render_template("removed.html")
+
+@app.route("/post/<post_id>/edit", methods=["get", "post"])
+@login_required
+def edit_post(post_id):
+	post = Post.get_by_id(post_id)
+	if post.user_id != current_user.user_id:
+		return "it appears you are not the owner of this post, or you are not logged in"
+	form = Submit_Form(request.form, obj=post)
+	if request.method == "POST" and form.validate():
+		print(form.expires_date.data)
+		post.__init__(
+			current_user.user_id,
+			form.url.data,
+			form.gender.data,
+			form.text.data,
+			form.expires_date.data,
+			form.require_captcha.data,
+			form.require_trust.data,
+		)
+		db.session.commit()
+		flash("post edited successfully")
+		return redirect("/post/" + str(post.post_id))
+	else:
+		# We use the date rather than relative for UX
+		form.expires_date.data = post.expires
+		return render_template("submit.html", form=form, edit=True)
+
 
 @app.route("/post/<post_id>/link", methods=["get", "post"])
 @login_required
@@ -750,7 +778,7 @@ def submission_page():
 				form.url.data,
 				form.gender.data,
 				form.text.data,
-				form.expires.data,
+				datetime.datetime.now() + datetime.timedelta(days=int(form.expires.data)),
 				form.require_captcha.data,
 				form.require_trust.data,
 				)
