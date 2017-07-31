@@ -471,7 +471,7 @@ class Submit_Form(Form):
 	], render_kw={"placeholder": "link (optional)"})
 	gender = StringField("", [
 	], render_kw={"placeholder": "target gender (optional)"})
-	text = TextAreaField("", [
+	description = TextAreaField("", [
 	], render_kw={"placeholder": "description / any additional text (optional)"})
 	expires = StringField("days to expiration:", [
 	], render_kw={"placeholder": "days"}, default=30)
@@ -595,7 +595,7 @@ def edit_post(post_id):
 			current_user.user_id,
 			form.url.data,
 			form.gender.data,
-			form.text.data,
+			form.description.data,
 			form.expires_date.data,
 			form.require_captcha.data,
 			form.require_trust.data,
@@ -782,7 +782,7 @@ def submission_page():
 				current_user.user_id,
 				form.url.data,
 				form.gender.data,
-				form.text.data,
+				form.description.data,
 				datetime.datetime.now() + datetime.timedelta(days=int(form.expires.data)),
 				form.require_captcha.data,
 				form.require_trust.data,
