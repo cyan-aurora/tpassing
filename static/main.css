@@ -127,13 +127,13 @@ tr:nth-child(even) {
 	font-size: 20px;
 }
 
-ul.dash {
+ul.dash, .user-entered ul {
 	list-style: none;
 	margin-left: 20px;
 	padding-left: 20px;
 }
 
-ul.dash > li:before {
+ul.dash > li:before, .user-entered ul > li:before {
 	display: inline-block;
 	content: "- ";
 	width: 20px;
