@@ -670,6 +670,18 @@ def delete_comment(comment_id):
 		flash("it appears you are not the owner of this comment, or you are not logged in")
 		return redirect(post_url)
 
+@app.route("/comment/<comment_id>/edit", methods=["post"])
+@login_required
+def edit_comment(comment_id):
+	comment = Comment.get_by_id(comment_id)
+	if comment.user_id != current_user.user_id:
+		flash("it appears you are not the owner of this comment, or you are not logged in")
+		return redirect("/post/" + str(comment.post_id))
+	comment.text = request.form["comment"];
+	db.session.commit()
+	flash("comment edited successfully")
+	return redirect("/post/" + str(comment.post_id))
+
 @app.route("/vote")
 @login_required
 def vote_on_post():

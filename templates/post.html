@@ -69,6 +69,35 @@
 
 		}
 
+		function editComment(id) {
+
+			var comment = $("." + id + ".comment");
+			var original = $("." + id + ".original-md");
+			var form = $("#edit-template");
+			var editLink = $("." + id + ".edit-link");
+			form.attr("action", "/comment/" + id + "/edit");
+			form.children("textarea").html(original.html());
+			comment.replaceWith(form);
+			editLink.html("cancel");
+			editLink.click(function() {
+				cancelEditComment(id);
+			})
+
+		}
+
+		function cancelEditComment(id) {
+
+			// TODO: Support getting the stuff back
+			var form = $("#edit-template");
+			var editLink = $("." + id + ".edit-link");
+			form.remove();
+			editLink.html("reload to edit");
+			editLink.click(function() {
+				window.location.reload();
+			});
+
+		}
+
 		$(loadVotes);
 
 	</script>
@@ -113,9 +142,13 @@
 				{{ comment.user.username }}
 			</span>
 			{% if comment.user_id == current_user.user_id %}
-				<span style="float: right"><a href="/comment/{{ comment.comment_id }}/delete">delete</a></span>
+				<span style="float: right">
+					<a href="javascript:void(0);" class="{{ comment.comment_id }} edit-link" onclick="editComment({{ comment.comment_id }});">edit</a> |
+					<a href="/comment/{{ comment.comment_id }}/delete">delete</a>
+				</span>
 			{% endif %}
-			<div class="user-entered">{{ comment.text|e|markdown }}</div>
+			<div class="{{ comment.comment_id }} comment user-entered">{{ comment.text|e|markdown }}</div>
+			<div style="display: none;" class="{{ comment.comment_id }} original-md user-entered">{{ comment.text|e }}</div>
 
 			<span>
 				{{ vote_link(comment.comment_id, "comment-agree", "up", "agree", False, comment) }}
@@ -131,4 +164,10 @@
 	<p>please report anything as much as tone-deaf to
 	<a href="mailto:cyanauroratp@gmail.com">cyanauroratp@gmail.com</a>. I'm
 	working on implementing a report feature.</p>
+	<div style="display: none;">
+		<form id="edit-template" class="full-form" method="post">
+			<textarea name="comment"></textarea>
+			<input type="submit" value="edit">
+		</form>
+	</div>
 {% endblock %}
