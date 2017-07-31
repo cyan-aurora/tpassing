@@ -586,7 +586,8 @@ def view_post(post_id):
 def edit_post(post_id):
 	post = Post.get_by_id(post_id)
 	if post.user_id != current_user.user_id:
-		return "it appears you are not the owner of this post, or you are not logged in"
+		flash("it appears you are not the owner of this post, or you are not logged in")
+		return redirect("/post/" + str(post_id))
 	form = Submit_Form(request.form, obj=post)
 	if request.method == "POST" and form.validate():
 		print(form.expires_date.data)
@@ -655,7 +656,7 @@ def delete_post(post_id):
 		flash("the post was deleted successfully")
 		return redirect("/")
 	else:
-		flash("it appears you are not th owner of this post, or you are not logged in")
+		flash("it appears you are not the owner of this post, or you are not logged in")
 		return redirect("/post/" + str(post_id))
 
 @app.route("/comment/<comment_id>/delete")
