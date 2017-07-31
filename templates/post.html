@@ -115,7 +115,7 @@
 			{% if comment.user_id == current_user.user_id %}
 				<span style="float: right"><a href="/comment/{{ comment.comment_id }}/delete">delete</a></span>
 			{% endif %}
-			<div class="user-entered">{{ comment.text|e|markdown }}</div>
+			<div class="user-entered">{{ comment.description|e|markdown }}</div>
 
 			<span>
 				{{ vote_link(comment.comment_id, "comment-agree", "up", "agree", False, comment) }}

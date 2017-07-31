@@ -8,9 +8,9 @@
 			- no login required - but don't "Share to community."<br />
 			<a href="/about/links">read more</a> about why I don't host images.<br />
 		</label>
-		{{ render_field(form.url)     }}
-		{{ render_field(form.gender)  }}
-		{{ render_field(form.text)    }}
+		{{ render_field(form.url) }}
+		{{ render_field(form.gender) }}
+		{{ render_field(form.description) }}
 		<p><a href="https://en.support.wordpress.com/markdown-quick-reference/">formatting help</a> (markdown)</p>
 		{% if edit %}
 			{{ render_field(form.expires_date) }}
