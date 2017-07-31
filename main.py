@@ -725,6 +725,10 @@ def about_links():
 def donate():
 	return render_template("about/donate.html")
 
+@app.route("/about/contributors")
+def contributors_list():
+	return render_template("about/contributors.html")
+
 @app.route("/about/reddit")
 def reddit_proof():
 	return render_template("about/reddit.html")

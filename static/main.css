@@ -95,9 +95,6 @@ table {
 	width: 100%;
 	border-spacing: 0;
 }
-tr {
-	cursor: pointer;
-}
 td {
 	padding: 10px;
 	text-align: center;
@@ -108,14 +105,17 @@ tr:nth-child(odd) {
 tr:nth-child(even) {
 	background-color: #72c0f7;
 }
-tr:first-child {
+.browse tr {
+	cursor: pointer;
+}
+.browse tr:first-child {
 	background-color: #1b97f0;
 	cursor: initial;
 }
-tr:hover {
+.browse tr:hover {
 	background-color: #1b97f0;
 }
-table a:visited {
+.browse a:visited {
 	color: #a222a5;
 }
 
