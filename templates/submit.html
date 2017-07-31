@@ -19,8 +19,6 @@
 		{% endif %}
 		{{ render_field(form.require_captcha, True) }}<div style="margin: 20px;"></div>
 		{{ render_field(form.require_trust, True) }}<div style="margin: 20px;"></div>
-		<img src="/captcha" alt="captcha" /><br />
-		{{ render_field(form.captcha) }}
 		<input type="submit" value="submit" />
 	</form>
 {% endblock %}

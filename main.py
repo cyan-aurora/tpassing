@@ -478,9 +478,6 @@ class Submit_Form(Form):
 	expires_date = DateField("expiration date:")
 	require_captcha = BooleanField("require a captcha to view this post (prevent robots from accessing)")
 	require_trust = BooleanField("require an upvoted post or comment to view this post (prevent trolls from accessing)")
-	captcha = StringField("", [
-		check_captcha
-	], render_kw={"placeholder": "enter the text above"})
 
 class Registration_Form(Form):
 	username = StringField("", [
