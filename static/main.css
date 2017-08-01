@@ -8,7 +8,7 @@ body {
 	font-family: sans-serif;
 	color: #110310;
 	background-color: #f4f9fe;
-	background: linear-gradient(180deg, #f4f9fe, #d4d4de);
+	background: linear-gradient(180deg, #e5f1fe, #f4f9fe);
 	min-height: 100vh;
 }
 
@@ -109,7 +109,7 @@ a {
 }
 
 .user-entered {
-	background-color: #e6f2ff;
+	background-color: #cbe5fe;
 	padding: 10px;
 }
 .original-poster {
