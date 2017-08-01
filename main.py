@@ -27,6 +27,7 @@ from flask import Flask, request, session, render_template, redirect, send_file,
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user, UserMixin
 from flask_principal import Principal, Identity, AnonymousIdentity, identity_changed, Permission, ActionNeed
+from flask_moment import Moment
 from wtforms import Form, StringField, PasswordField, TextAreaField, BooleanField, validators, ValidationError
 from flaskext.markdown import Markdown
 
@@ -50,6 +51,8 @@ login_manager.init_app(app)
 login_manager.login_view = "login"
 
 Markdown(app)
+
+moment = Moment(app)
 
 ### NON-ROUTE FUNCTIONS (library functions)
 

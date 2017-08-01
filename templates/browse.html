@@ -20,7 +20,7 @@
 				<a href="/post/{{ post.post_id }}">view</a>
 			</td>
 			<td>{{ post.gender }}</td>
-			<td>{{ post.created }}</td>
+			<td>{{ moment(post.created).format("YYYY-MM-DD") }}</td>
 		</tr>
 	{% endfor %}
 	</table>
