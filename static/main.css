@@ -10,7 +10,6 @@ body {
 	background-color: #f4f9fe;
 	background: linear-gradient(180deg, #f4f9fe, #d4d4de);
 	min-height: 100vh;
-	padding-top: 7em;
 }
 
 h1 {
@@ -66,6 +65,7 @@ a {
 	max-width: 800px;
 	margin: 0 auto;
 	padding: 10px;
+	padding-top: 7em;
 }
 
 .top-bar {
@@ -80,6 +80,14 @@ a {
 	box-shadow: 0px 0px 5px #888;
 }
 
+@media screen and (max-height: 700px), screen and (max-width: 1000px) {
+	.top-bar {
+		position: static;
+	}
+	.wrap {
+		padding-top: 10px;
+	}
+}
 
 .top-bar h1 {
 	margin: 0;
