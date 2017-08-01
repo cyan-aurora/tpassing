@@ -69,13 +69,45 @@
 
 		}
 
+		function editComment(id) {
+
+			var comment = $("." + id + ".comment");
+			var original = $("." + id + ".original-md");
+			var form = $("#edit-template");
+			var editLink = $("." + id + ".edit-link");
+			form.attr("action", "/comment/" + id + "/edit");
+			form.children("textarea").html(original.html());
+			comment.replaceWith(form);
+			editLink.html("cancel");
+			editLink.click(function() {
+				cancelEditComment(id);
+			})
+
+		}
+
+		function cancelEditComment(id) {
+
+			// TODO: Support getting the stuff back
+			var form = $("#edit-template");
+			var editLink = $("." + id + ".edit-link");
+			form.remove();
+			editLink.html("reload to edit");
+			editLink.click(function() {
+				window.location.reload();
+			});
+
+		}
+
 		$(loadVotes);
 
 	</script>
 {% endblock %}
 
-{% macro vote_link(id, type, value, text, is_end) %}
-	<a class="{{ id }} {{ type }} {{ value }} link" href="javascript:void(0);" onclick="vote({{ id }}, '{{ type }}', '{{ value }}')">{{ text }}</a>
+{% macro vote_link(id, type, value, text, is_end, item) %}
+	{% set votable = item.user_id != current_user.user_id %}
+	{% if votable %}
+		<a class="{{ id }} {{ type }} {{ value }} link" href="javascript:void(0);" onclick="vote({{ id }}, '{{ type }}', '{{ value }}')">
+	{%- endif %}{{ text }}{% if votable %}</a>{% endif %}
 	- <span class="{{ id }} {{ type }} {{ value }} count">{{ votes(id, type, value) }}</span>{% if not is_end %} |{% endif %}
 {% endmacro %}
 
@@ -87,16 +119,16 @@
 		<div class="user-entered">{{ post.description|e|markdown }}</div>
 	{% endif %}
 	{% if current_user.user_id == post.user_id %}
-		<p><a href="/post/{{ post.post_id }}/delete">delete</a></p>
+		<p><a href="/post/{{ post.post_id }}/edit">edit</a> | <a href="/post/{{ post.post_id }}/delete">delete</a></p>
 	{% endif %}
 	<span>
-		{{ vote_link(post.post_id, "post-passes", "up", "passes") }}
-		{{ vote_link(post.post_id, "post-passes", "down", "not yet") }}
-		{{ vote_link(post.post_id, "post-passes", "maybe", "other / not sure", true) }}
+		{{ vote_link(post.post_id, "post-passes", "up", "passes", False, post) }}
+		{{ vote_link(post.post_id, "post-passes", "down", "not yet", False, post) }}
+		{{ vote_link(post.post_id, "post-passes", "maybe", "other / not sure", True, post) }}
 	</span>
 	<span style="float: right;">
-		{{ vote_link(post.post_id, "post-quality", "up", "high quality") }}
-		{{ vote_link(post.post_id, "post-quality", "down", "low effort", true) }}
+		{{ vote_link(post.post_id, "post-quality", "up", "high quality", False, post) }}
+		{{ vote_link(post.post_id, "post-quality", "down", "low effort", True, post) }}
 	</span>
 	<h2>comments</h2>
 	<form class="full-form" action="/post/{{ post.post_id }}/comment" method="post">
@@ -110,17 +142,21 @@
 				{{ comment.user.username }}
 			</span>
 			{% if comment.user_id == current_user.user_id %}
-				<span style="float: right"><a href="/comment/{{ comment.comment_id }}/delete">delete</a></span>
+				<span style="float: right">
+					<a href="javascript:void(0);" class="{{ comment.comment_id }} edit-link" onclick="editComment({{ comment.comment_id }});">edit</a> |
+					<a href="/comment/{{ comment.comment_id }}/delete">delete</a>
+				</span>
 			{% endif %}
-			<div class="user-entered">{{ comment.text|e|markdown }}</div>
+			<div class="{{ comment.comment_id }} comment user-entered">{{ comment.text|e|markdown }}</div>
+			<div style="display: none;" class="{{ comment.comment_id }} original-md user-entered">{{ comment.text|e }}</div>
 
 			<span>
-				{{ vote_link(comment.comment_id, "comment-agree", "up", "agree") }}
-				{{ vote_link(comment.comment_id, "comment-agree", "down", "disagree", true) }}
+				{{ vote_link(comment.comment_id, "comment-agree", "up", "agree", False, comment) }}
+				{{ vote_link(comment.comment_id, "comment-agree", "down", "disagree", True, comment) }}
 			</span>
 			<span style="float: right">
-				{{ vote_link(comment.comment_id, "comment-quality", "up", "constructive") }}
-				{{ vote_link(comment.comment_id, "comment-quality", "down", "unconstructive", true) }}
+				{{ vote_link(comment.comment_id, "comment-quality", "up", "constructive", False, comment) }}
+				{{ vote_link(comment.comment_id, "comment-quality", "down", "unconstructive", True, comment) }}
 			</span>
 
 		</div>
@@ -128,4 +164,10 @@
 	<p>please report anything as much as tone-deaf to
 	<a href="mailto:cyanauroratp@gmail.com">cyanauroratp@gmail.com</a>. I'm
 	working on implementing a report feature.</p>
+	<div style="display: none;">
+		<form id="edit-template" class="full-form" method="post">
+			<textarea name="comment"></textarea>
+			<input type="submit" value="edit">
+		</form>
+	</div>
 {% endblock %}

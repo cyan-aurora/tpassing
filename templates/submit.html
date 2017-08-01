@@ -1,22 +1,24 @@
 {% extends "standard.html" %}
 
 {% block main %}
-	<form class="full-form" action="/submit" method="post">
+	<form class="full-form" method="post">
 		<label for="url">
 			link to an image or other content.<br />
 			try <a href="https://imgur.com/upload">imgur</a>
 			- no login required - but don't "Share to community."<br />
 			<a href="/about/links">read more</a> about why I don't host images.<br />
 		</label>
-		{{ render_field(form.url)     }}
-		{{ render_field(form.gender)  }}
-		{{ render_field(form.text)    }}
+		{{ render_field(form.url) }}
+		{{ render_field(form.gender) }}
+		{{ render_field(form.description) }}
 		<p><a href="https://en.support.wordpress.com/markdown-quick-reference/">formatting help</a> (markdown)</p>
-		{{ render_field(form.expires) }}
+		{% if edit %}
+			{{ render_field(form.expires_date) }}
+		{% else %}
+			{{ render_field(form.expires) }}
+		{% endif %}
 		{{ render_field(form.require_captcha, True) }}<div style="margin: 20px;"></div>
 		{{ render_field(form.require_trust, True) }}<div style="margin: 20px;"></div>
-		<img src="/captcha" alt="captcha" /><br />
-		{{ render_field(form.captcha) }}
-		<input type="submit" value="submit" />
+		<input type="submit" value="{% if edit %}edit{% else %}submit{% endif %}" />
 	</form>
 {% endblock %}
