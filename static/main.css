@@ -119,9 +119,6 @@ a {
 table {
 	width: 100%;
 	border-spacing: 0;
-	border: 1px solid #444;
-	border-radius: 5px;
-	box-shadow: 0px 0px 5px #888;
 }
 td {
 	padding: 10px;
@@ -132,6 +129,12 @@ tr:nth-child(odd) {
 }
 tr:nth-child(even) {
 	background-color: #72c0f7;
+}
+.browse {
+	border-spacing: 0;
+	border: 1px solid #444;
+	border-radius: 5px;
+	box-shadow: 0px 0px 5px #888;
 }
 .browse tr {
 	cursor: pointer;
