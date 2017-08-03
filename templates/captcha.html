@@ -1,12 +1,10 @@
 {% extends "standard.html" %}
 
 {% block main %}
-	<div class="wrap">
-		<p>in order to prevent scraping of site, we present a captcha</p>
-		<form method="post">
-			<img src="/captcha" alt="captcha" /><br />
-			<input type="text" name="answer" /><br />
-			<input type="submit" value="check" />
-		</form>
-	</div>
+	<p>in order to prevent scraping of site, we present a captcha</p>
+	<form method="post">
+		<img src="/captcha" alt="captcha" /><br />
+		<input type="text" name="answer" /><br />
+		<input type="submit" value="check" />
+	</form>
 {% endblock %}
