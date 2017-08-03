@@ -49,12 +49,6 @@ a {
 	text-decoration: none;
 }
 
-@media screen and (max-width: 1000px) {
-	.exit-floater {
-		display: none;
-	}
-}
-
 .exit-floater:hover {
 	opacity: 0.8;
 	background-color: #FF0000;
@@ -80,12 +74,15 @@ a {
 	box-shadow: 0px 0px 5px #888;
 }
 
-@media screen and (max-height: 700px), screen and (max-width: 1000px) {
+@media screen and (max-height: 650px), screen and (max-width: 1000px) {
 	.top-bar {
 		position: static;
 	}
 	.wrap {
 		padding-top: 10px;
+	}
+	.exit-floater {
+		display: none;
 	}
 }
 
