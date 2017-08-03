@@ -83,7 +83,7 @@ def is_trusted_user():
 			db.func.count(Vote.vote_id).label("count"))
 		.filter(User.user_id == current_user.user_id)
 		.outerjoin(User.comments)
-		.outerjoin(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-quality") & (Vote.vote_value == "up"))
+		.outerjoin(Vote, (Vote.item_on_id == Comment.comment_id) & (Vote.vote_type == "comment-quality") & (Vote.vote_value == "down"))
 		).first().count
 	posts_up = (db.session.query(
 			db.func.count(Vote.vote_id).label("count"))
@@ -99,6 +99,8 @@ def is_trusted_user():
 		).first().count
 	feedback_required = config.getint("Trust", "feedback_margin_required")
 	posts_required = config.getint("Trust", "post_margin_required")
+	print(feedback_up)
+	print(feedback_down)
 	if feedback_up - feedback_down >= feedback_required or posts_up - posts_down >= posts_required:
 		# We're good, move on to the next confirmation step
 		return True
