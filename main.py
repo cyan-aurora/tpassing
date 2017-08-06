@@ -1,9 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
 
 # This is the main (and currently only) entry point of tpassing
 
 ### IMPORT AND SETUP
 
+from os import getenv
 import sys
 
 if sys.version_info < (3, 0):
@@ -41,6 +42,10 @@ app.config["SECRET_KEY"] = secure_config.get("Flask", "secret_key")
 
 mysql_password = secure_config.get("SQL", "password")
 app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:" + mysql_password + "@localhost/transpassing"
+if getenv("SERVER_SOFTWARE", "").startswith("Google App Engine/"): # Using GAE
+	mysql_address = "/cloudsql/" + secure_config.get("SQL", "gae_connection_name")
+	mysql_password = secure_config.get("SQL", "gae_password")
+	app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:" + mysql_password + "@/transpassing?unix_socket=/cloudsql/" + mysql_address
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
