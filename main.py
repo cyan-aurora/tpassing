@@ -99,8 +99,6 @@ def is_trusted_user():
 		).first().count
 	feedback_required = config.getint("Trust", "feedback_margin_required")
 	posts_required = config.getint("Trust", "post_margin_required")
-	print(feedback_up)
-	print(feedback_down)
 	if feedback_up - feedback_down >= feedback_required or posts_up - posts_down >= posts_required:
 		# We're good, move on to the next confirmation step
 		return True
@@ -592,7 +590,6 @@ def edit_post(post_id):
 		return redirect("/post/" + str(post_id))
 	form = Submit_Form(request.form, obj=post)
 	if request.method == "POST" and form.validate():
-		print(form.expires_date.data)
 		post.__init__(
 			current_user.user_id,
 			form.url.data,
