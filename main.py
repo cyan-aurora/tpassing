@@ -162,7 +162,7 @@ class Captcha_Manager():
 
 	def generate_image(self):
 		self.bind_session()
-		captcha_image = ImageCaptcha(fonts=[config.get("System", "font")])
+		captcha_image = ImageCaptcha(fonts=[config.get("Captcha", "font")])
 		return send_file(captcha_image.generate(self.data["answer"]), mimetype="image/png")
 
 # Singleton :( is good? TODO
