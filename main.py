@@ -43,10 +43,8 @@ app.config["SECRET_KEY"] = secure_config.get("Flask", "secret_key")
 mysql_password = secure_config.get("SQL", "password")
 app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:" + mysql_password + "@localhost/transpassing"
 if getenv("GAE_SERVICE"): # Using GAE
-	app.logger.info("using google app engine")
 	mysql_address = "/cloudsql/" + secure_config.get("SQL", "gae_connection_name")
 	mysql_password = secure_config.get("SQL", "gae_password")
-	app.logger.info("mysql+pymysql://root:" + mysql_password + "@/transpassing?unix_socket=/cloudsql/" + mysql_address)
 	app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:" + mysql_password + "@/transpassing?unix_socket=" + mysql_address
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
