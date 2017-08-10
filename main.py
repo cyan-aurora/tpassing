@@ -29,6 +29,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user, UserMixin
 from flask_principal import Principal, Identity, AnonymousIdentity, identity_changed, Permission, ActionNeed
 from flask_moment import Moment
+from flask_sslify import SSLify
 from wtforms import Form, StringField, PasswordField, TextAreaField, BooleanField, DateField, validators, ValidationError
 from flaskext.markdown import Markdown
 
@@ -39,6 +40,8 @@ config.read("config.ini")
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = secure_config.get("Flask", "secret_key")
+
+sslify = SSLify(app, permanent=True)
 
 mysql_password = secure_config.get("SQL", "password")
 app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:" + mysql_password + "@localhost/transpassing"

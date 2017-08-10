@@ -4,6 +4,7 @@ Flask-SQLAlchemy
 Flask-WTF
 Flask-Markdown
 Flask-Moment
+Flask-SSLify
 Pillow
 PyMySQL
 SQLAlchemy-Utils
