@@ -43,7 +43,12 @@
 		{% block top_bar %}
 			{% if current_user.is_authenticated %}
 				<div class="logout">
-					<span>{{ current_user.username }} | </span><a href="/logout">log out</a>
+					<span>
+						{%- if current_user.posts %}<a href="/me">{% endif %}
+						{{- current_user.username }}
+						{%- if current_user.posts %}</a>{% endif %}
+						|
+					</span><a href="/logout">log out</a>
 				</div>
 			{% else %}
 				<div class="login">
