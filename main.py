@@ -531,17 +531,9 @@ def browse():
 		return about()
 
 @app.route("/me")
+@login_required
 def self_page():
-	posts = current_user.posts
-	if (posts):
-		post = posts[0]
-		return redirect("/post/" + str(post.post_id))
-	else:
-		flash("sorry, we can't find a post by you")
-		back = "/"
-		if is_safe_url(request.referrer):
-			back = request.referrer
-		return redirect(back)
+	return render_template("user.html")
 
 @app.route("/captcha")
 def captcha_image():

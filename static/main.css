@@ -29,6 +29,9 @@ h3 {
 p {
 	margin: 16px 0;
 }
+.no-p p {
+	margin: 0;
+}
 
 a {
 	color: #2471a8;
