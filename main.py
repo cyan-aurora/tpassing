@@ -817,6 +817,10 @@ def submission_page():
 		return redirect("/post/" + str(post.post_id))
 	return render_template("submit.html", form=form)
 
+@app.route("/favicon.ico")
+def favicon():
+	return flask.send_from_directory("static", "favicon.ico")
+
 @app.route("/debug")
 def debug_page():
 	if app.debug:
