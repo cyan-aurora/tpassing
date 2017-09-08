@@ -1,10 +1,44 @@
 {% extends "standard.html" %}
 
+{% block head %}
+
+	{{ super() }}
+	<script>
+		function collapseExpand(id) {
+			$("#"+id).slideToggle();
+			$("#"+id+"-title").toggleClass("collapsed-title");
+		}
+	</script>
+	<style>
+		.section, .section-title {
+			background-color: #cbe5fe;
+			padding: 1em;
+		}
+		.section-title {
+			cursor: pointer;
+			margin-bottom: 0;
+		}
+		.section-title::after {
+			content: " \25B2"
+		}
+		.collapsed-title.section-title::after {
+			content: " \25BC"
+		}
+		.collapsed {
+			display: none;
+		}
+	</style>
+
+{% endblock %}
+
 {% block main %}
 
 	<h2>a fair, safe place to see how well you pass</h2>
 
 	<p><a href="/register">make an account</a> to view posts</p>
+
+	<p>tpassing is a place for trans people to get constructive feedback on how
+	well they pass.</p>
 
 	<p>tpassing is</p>
 
@@ -13,24 +47,36 @@
 		<li><a href="/about/coolness">give feedback, get feedback</a>; no more no less</li>
 		<li><a href="/about/coolness">accurate sampling of peers</a></li>
 		<li><a href="/about/feedback">designed to emphasize constructive feedback</a></li>
+		<li><a href="/about/feedback">separate anonymous votes to avoid hugboxing</a></li>
 		<li><a href="https://www.gnu.org/philosophy/free-sw.en.html">free software</a> (<a href="https://github.com/cyan-aurora/transpassing">source</a>)</li>
 	</ul>
 
-	<p>problems with <a href="https://reddit.com/r/transpassing">/r/transpassing</a></p>
+	<p>post a picture, video, audio, or other media securely. then other users
+	will leave constructive feedback. also receive anonymous votes to give you
+	an accurate numerical perspective.</p>
 
-	<ul class="dash">
-		<li>pictures stick around for the world to see</li>
-		<li>people who pass get upvoted and get more feedback and visibility</li>
-		<li>many posts, few comments - little constructive feedback</li>
-		<li>sorting algorithm presents flawed view of community</li>
-	</ul>
+	<p>tpassing is a <b>safe space</b>. if you are not trans, you do not belong here.</p>
 
-	<p>
-		<a href="https://reddit.com/r/transpassing">/r/transpassing</a>
-		is a huge service to the community, but it has serious flaws,
-		because it is not well-suited to reddit. tpassing is my answer.
-		<a href="/register">make an account</a>
-	</p>
+	<p class="section-title collapsed-title" id="reddit-section-title" onclick="collapseExpand('reddit-section');">comparison with /r/transpassing</p>
+
+	<div class="section collapsed" id="reddit-section">
+
+		<p>on <a href="https://reddit.com/r/transpassing">/r/transpassing</a>:</p>
+
+		<ul class="dash">
+			<li>pictures stick around for the world to see</li>
+			<li>people who pass get upvoted and get more feedback and visibility</li>
+			<li>many posts, few comments - little constructive feedback</li>
+			<li>sorting algorithm presents flawed view of community</li>
+		</ul>
+
+		<p>
+			<a href="https://reddit.com/r/transpassing">/r/transpassing</a>
+			is a huge service to the community, but it has serious flaws,
+			because it is not well-suited to reddit. tpassing is my answer.
+		</p>
+
+	</div>
 
 	<p>
 		tpassing is very much in alpha. if you agree that it needs to be
@@ -40,6 +86,8 @@
 		or <a href="/about/donate">donating</a> to the project.
 		<a href="/about/contributors">list of contributors</a>.
 	</p>
+
+	<p><a href="/register">make an account</a></p>
 
 	<p>
 		if you have any questions, do not hesitate to email me at
