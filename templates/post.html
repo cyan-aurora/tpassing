@@ -51,6 +51,8 @@
 			voteRequest.addEventListener("load", displayVote)
 			voteRequest.send();
 
+			voteStatus(id, "waiting", type)
+
 		}
 
 		function voteStatus(id, value, type) {
@@ -59,12 +61,19 @@
 
 			var votedColor = "#a222a5";
 			var unvotedColor = "#2471a8";
+			var waitingColor = "#869aa8"
 
-			// Make all grouped links unclicked...
-			$("." + id + "." + type +               ".link").css({color: unvotedColor});
-			// ... and make clicked one appear clicked
-			if (value) {
-				$("." + id + "." + type + "." + value + ".link").css({color:   votedColor});
+			// If we are passed waiting, we make it look greyish to indicate loading
+			if (value == "waiting") {
+				$("." + id + "." + type + ".link").css({color: waitingColor});
+			}
+			else {
+				// Make all grouped links unclicked...
+				$("." + id + "." + type +               ".link").css({color: unvotedColor});
+				// ... and make clicked one appear clicked
+				if (value) {
+					$("." + id + "." + type + "." + value + ".link").css({color:   votedColor});
+				}
 			}
 
 		}
