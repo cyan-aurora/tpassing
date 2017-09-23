@@ -1,7 +1,6 @@
 {% extends "standard.html" %}
-{% block main %}
 
-	<h2>security</h2>
+{% macro security() %}
 
 	<p>security is the number one goal of this site, based on the fundamental
 	issue with the task at hand: we want some internet strangers to be able to
@@ -29,5 +28,14 @@
 	<p>to prevent troll posts, we sort posts based on the user's comment karma.
 	(this is actually a side effect of <a href="/about/coolness">coolness</a>.
 	<a href="https://xkcd.com/810/">"but what if trolls produce lots of positive feedback?"</a></p>
+
+{% endmacro %}
+
+
+{% block main %}
+
+	<h2>security</h2>
+
+	{{ security() }}
 
 {% endblock %}

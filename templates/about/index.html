@@ -1,5 +1,13 @@
 {% extends "standard.html" %}
 
+{% from "about/security.html" import security with context %}
+{% from "about/coolness.html" import coolness with context %}
+{% from "about/feedback.html" import feedback with context %}
+{% from "about/free.html"     import free     with context %}
+{% macro about_permalink(url) %}
+	<p><a href="/about/{{ url }}">permalink</a></p>
+{% endmacro %}
+
 {% block head %}
 
 	{{ super() }}
@@ -8,21 +16,40 @@
 			$("#"+id).slideToggle();
 			$("#"+id+"-title").toggleClass("collapsed-title");
 		}
+		$(function() {
+			$(".section-title").each(function() {
+
+				var id = $(this).attr("id").replace("-title", "");
+
+				$(this).addClass("collapsed-title");
+				$("#"+id).addClass("collapsed");
+				$(this).attr("title", "click to read more");
+
+				$(this).click(function() {
+					collapseExpand(id);
+				});
+
+			});
+		});
 	</script>
 	<style>
 		.section, .section-title {
 			background-color: #cbe5fe;
-			padding: 1em;
+			padding: 0.5em;
 		}
 		.section-title {
 			cursor: pointer;
 			margin-bottom: 0;
+			border-bottom: 1px solid #110310;
 		}
 		.section-title::after {
 			content: " \25B2"
 		}
 		.collapsed-title.section-title::after {
 			content: " \25BC"
+		}
+		.collapsed-title {
+			border-bottom: none;
 		}
 		.collapsed {
 			display: none;
@@ -42,24 +69,23 @@
 
 	<p>tpassing is</p>
 
-	<ul class="dash">
-		<li><a href="/about/security">secure</a>: no record of picture / <a href="/about/links">link</a></li>
-		<li><a href="/about/coolness">give feedback, get feedback</a>; no more no less</li>
-		<li><a href="/about/coolness">accurate sampling of peers</a></li>
-		<li><a href="/about/feedback">designed to emphasize constructive feedback</a></li>
-		<li><a href="/about/feedback">separate anonymous votes to avoid hugboxing</a></li>
-		<li><a href="https://www.gnu.org/philosophy/free-sw.en.html">free software</a> (<a href="https://github.com/cyan-aurora/transpassing">source</a>)</li>
-	</ul>
+	<p class="section-title" id="secure-section-title">secure: no record of picture / <a href="/about/links">link</a></p>
+	<div class="section" id="secure-section">{{ security() }}{{ about_permalink("security") }}</div>
+	<p class="section-title" id="coolness-section-title">give feedback, get feedback; no more no less</p>
+	<div class="section" id="coolness-section">{{ coolness() }}{{ about_permalink("coolness") }}</div>
+	<p class="section-title" id="feedback-section-title">designed to emphasize constructive feedback, with votes to avoid hugboxing</p>
+	<div class="section" id="feedback-section">{{ feedback() }}{{ about_permalink("feedback") }}</div>
+	<p class="section-title" id="free-section-title">free software</p>
+	<div class="section" id="free-section">{{ free() }}{{ about_permalink("free") }}</div>
 
 	<p>post a picture, video, audio, or other media securely. then other users
-	will leave constructive feedback. also receive anonymous votes to give you
-	an accurate numerical perspective.</p>
+	will leave constructive feedback. also receive votes on how well you pass.</p>
 
 	<p>tpassing is a <b>safe space</b>. if you are not trans, you do not belong here.</p>
 
-	<p class="section-title collapsed-title" id="reddit-section-title" onclick="collapseExpand('reddit-section');">comparison with /r/transpassing</p>
+	<p class="section-title" id="reddit-section-title">comparison with /r/transpassing</p>
 
-	<div class="section collapsed" id="reddit-section">
+	<div class="section" id="reddit-section">
 
 		<p>on <a href="https://reddit.com/r/transpassing">/r/transpassing</a>:</p>
 

@@ -1,7 +1,6 @@
 {% extends "standard.html" %}
-{% block main %}
 
-	<h2>constructive feedback / voting</h2>
+{% macro feedback() %}
 
 	<p>
 		the focus of tpassing is on constructive feedback, not celebration,
@@ -37,5 +36,13 @@
 		should not be encouraged. but that doesn't mean we can't show the poster
 		how many people agreed.
 	</p>
+
+{% endmacro %}
+
+{% block main %}
+
+	<h2>constructive feedback / voting</h2>
+
+	{{ feedback() }}
 
 {% endblock %}

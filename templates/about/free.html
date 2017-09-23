@@ -1,0 +1,31 @@
+{% extends "standard.html" %}
+
+{% macro free() %}
+
+	<p>
+		tpassing is
+		<a href="https://www.gnu.org/philosophy/free-sw.en.html">free software</a>.
+		You can view the
+		<a href="https://github.com/cyan-aurora/transpassing">source</a>
+		on github. this means that you can rest assured there is no secret data collection going on, and also use the software
+		<a href="https://www.gnu.org/licenses/gpl-3.0.html">as you wish</a>.
+		there are no advertisements.
+	</p>
+	<p>
+		we also welcome contributions!  You can help by
+		<a href="https://github.com/cyan-aurora/transpassing/blob/master/CONTRIBUTING.md">contributing</a>,
+		<a href="https://github.com/cyan-aurora/transpassing/issues">reporting bugs</a>,
+		or <a href="/about/donate">donating</a> to the project. please view the
+		<a href="/about/contributors">list of contributors</a>.
+	</p>
+
+{% endmacro %}
+
+
+{% block main %}
+
+	<h2>tpassing is free software</h2>
+
+	{{ free() }}
+
+{% endblock %}

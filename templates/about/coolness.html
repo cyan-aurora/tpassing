@@ -1,7 +1,6 @@
 {% extends "standard.html" %}
-{% block main %}
 
-	<h2>fairness / coolness</h2>
+{% macro coolness() %}
 
 	<p>the most exciting part of tpassing is the coolness algorithm, also known
 	as "give feedback, get feedback." the coolness algorithm sorts posts by the
@@ -32,5 +31,13 @@
 
 	<p>the coolness algorithm and its term are taken from <a href="http://ludumdare.com/compo/">ludum
 	dare</a> after seeing its great effectiveness</p>
+
+{% endmacro %}
+
+{% block main %}
+
+	<h2>fairness / coolness</h2>
+
+	{{ coolness() }}
 
 {% endblock %}
