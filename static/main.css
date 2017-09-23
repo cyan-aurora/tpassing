@@ -18,16 +18,33 @@ h1 {
 
 h2 {
 	margin: 20px 0;
-	font-size: 30px;
+	font-size: 1.75em;
 }
 
 h3 {
 	margin: 20px 0;
-	font-size: 25px;
+	font-size: 1.5em;
+}
+
+.user-entered h1 {
+	font-size: 1.5em;
+	margin: 0.66em 0;
+}
+.user-entered h2 {
+	font-size: 1.3em;
+	margin: 0.75em 0;
+}
+.user-entered h3 {
+	font-size: 1.2em;
+	margin: 0.83em 0;
+}
+.user-entered h4, h5, h6 {
+	font-size: 1em;
+	margin: 1em 0;
 }
 
 p {
-	margin: 16px 0;
+	margin: 1em 0;
 }
 .no-p p {
 	margin: 0;
