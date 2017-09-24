@@ -17,6 +17,7 @@
 		{% else %}
 			{{ render_field(form.expires) }}
 		{% endif %}
+		{{ render_field(form.disable_age, True) }}<div style="margin: 20px;"></div>
 		{{ render_field(form.require_captcha, True) }}<div style="margin: 20px;"></div>
 		{{ render_field(form.require_trust, True) }}<div style="margin: 20px;"></div>
 		<input type="submit" value="{% if edit %}edit{% else %}submit{% endif %}" />

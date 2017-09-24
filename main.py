@@ -221,6 +221,7 @@ class Post(db.Model):
 	description     = db.Column(db.Text)
 	created         = db.Column(db.DateTime, default=db.func.current_timestamp())
 	expires         = db.Column(db.DateTime)
+	allow_age       = db.Column(db.Boolean, default=False)
 	require_captcha = db.Column(db.Boolean, default=False)
 	require_trust   = db.Column(db.Boolean, default=False)
 	user_id         = db.Column(db.Integer, db.ForeignKey("user.user_id"))
@@ -228,12 +229,13 @@ class Post(db.Model):
 	comments        = db.relationship("Comment", lazy="dynamic", cascade="all, delete")
 	views           = db.relationship("View", lazy="dynamic", cascade="all, delete")
 
-	def __init__(self, user_id, url, gender, description, expires, require_captcha, require_trust):
+	def __init__(self, user_id, url, gender, description, expires, allow_age, require_captcha, require_trust):
 		self.user_id         = user_id
 		self.url             = url
 		self.gender          = gender
 		self.description     = description
 		self.expires         = expires
+		self.allow_age       = allow_age
 		self.require_captcha = require_captcha
 		self.require_trust   = require_trust
 
@@ -522,6 +524,7 @@ class Submit_Form(Form):
 	expires = StringField("days to expiration:", [
 	], render_kw={"placeholder": "days"}, default=30)
 	expires_date = DateField("expiration date:")
+	disable_age = BooleanField("do not allow users to vote on my apparent age")
 	require_captcha = BooleanField("require a captcha to view this post (prevent robots from accessing)")
 	require_trust = BooleanField("require an upvoted post or comment to view this post (prevent trolls from accessing)")
 
@@ -856,6 +859,7 @@ def submission_page():
 				form.gender.data,
 				form.description.data,
 				datetime.datetime.now() + datetime.timedelta(days=int(form.expires.data)),
+				not form.disable_age.data,
 				form.require_captcha.data,
 				form.require_trust.data,
 				)

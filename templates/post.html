@@ -193,17 +193,26 @@
 		{{ vote_link(post.post_id, "post-quality", "up", "high quality", False, post) }}
 		{{ vote_link(post.post_id, "post-quality", "down", "low effort", True, post) }}
 	</span>
-	<div class="age-vote">
-		apparent age:
-		{% if not post_owner %}
-			<input type="number" title="change value to vote" />
-			-
-		{% endif %}
-		<span class="age count">{{ votes(post.post_id, "age") }}</span>
-		{% if not post_owner %}
-			<span class="{{ post.post_id }} age link">(<a href="javascript:void(0);">unvote</a>)</span>
-		{% endif %}
-	</div>
+	{% if post.allow_age %}
+		<div class="age-vote">
+			{% set median = votes(post.post_id, "age") %}
+			apparent age:
+			{% if not post_owner %}
+				<input type="number" title="change value to vote" />
+				-
+			{% endif %}
+			<span class="age count">
+				{%- if median %}
+					{{ median }}
+				{%- else %}
+					no age votes yet
+				{% endif %}
+			</span>
+			{% if not post_owner %}
+				<span class="{{ post.post_id }} age link">(<a href="javascript:void(0);">unvote</a>)</span>
+			{% endif %}
+		</div>
+	{% endif %}
 	<h2>comments</h2>
 	<form class="full-form" action="/post/{{ post.post_id }}/comment" method="post">
 		<p style="text-align: right;">comments accept <a href="http://commonmark.org/help/">markdown</a></p>
