@@ -461,7 +461,10 @@ class Vote(db.Model):
 			.filter_by(vote_type="age", item_on_id=int(post_id))
 			.order_by(cls.vote_age)
 			).limit(int(count/2)+1).all()
-		return votes[int(count/2)][0]
+		if count > 0:
+			return votes[int(count/2)][0]
+		else:
+			return 0
 
 	@classmethod
 	def comment_subq(cls, vote_type, vote_value):
