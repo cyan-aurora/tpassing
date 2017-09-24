@@ -226,8 +226,8 @@ class Post(db.Model):
 	require_trust   = db.Column(db.Boolean, default=False)
 	user_id         = db.Column(db.Integer, db.ForeignKey("user.user_id"))
 	user            = db.relationship("User", back_populates="posts")
-	comments        = db.relationship("Comment", lazy="dynamic", cascade="all, delete")
-	views           = db.relationship("View", lazy="dynamic", cascade="all, delete")
+	comments        = db.relationship("Comment", lazy="dynamic", cascade="all, delete-orphan")
+	views           = db.relationship("View", lazy="dynamic", cascade="all, delete-orphan")
 
 	def __init__(self, user_id, url, gender, description, expires, allow_age, require_captcha, require_trust):
 		self.user_id         = user_id
@@ -336,8 +336,8 @@ class Post(db.Model):
 
 class Comment(db.Model):
 	comment_id = db.Column(db.Integer, primary_key=True)
-	post_id    = db.Column(db.Integer, db.ForeignKey("post.post_id"))
-	user_id    = db.Column(db.Integer, db.ForeignKey("user.user_id"))
+	post_id    = db.Column(db.Integer, db.ForeignKey("post.post_id", ondelete="CASCADE"))
+	user_id    = db.Column(db.Integer, db.ForeignKey("user.user_id", ondelete="CASCADE"))
 	created    = db.Column(db.DateTime, default=db.func.current_timestamp())
 	text       = db.Column(db.Text)
 	user       = db.relationship("User", back_populates="comments")
@@ -477,8 +477,8 @@ class Vote(db.Model):
 
 class View(db.Model):
 	view_id = db.Column(db.Integer, primary_key=True)
-	user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"))
-	post_id = db.Column(db.Integer, db.ForeignKey("post.post_id"))
+	user_id = db.Column(db.Integer, db.ForeignKey("user.user_id", ondelete="CASCADE"))
+	post_id = db.Column(db.Integer, db.ForeignKey("post.post_id", ondelete="CASCADE"))
 	post    = db.relationship("Post", back_populates="views")
 	def __init__(self, user_id, post_id):
 		self.user_id = user_id
@@ -650,6 +650,7 @@ def edit_post(post_id):
 			form.gender.data,
 			form.description.data,
 			form.expires_date.data,
+			not form.disable_age.data,
 			form.require_captcha.data,
 			form.require_trust.data,
 		)
