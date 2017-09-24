@@ -1,17 +1,19 @@
 {% extends "standard.html" %}
 
+{% macro register_form() %}
+	<form action="/register" method="post">
+		{{ render_field(form.username) }}<br />
+		{{ render_field(form.password) }}<br />
+		{{ render_field(form.confirm)  }}<br />
+		<img src="/captcha" alt="captcha" /><br />
+		{{ render_field(form.captcha)  }}<br />
+		<input type="submit" value="make account" />
+	</form>
+{% endmacro %}
+
 {% block main %}
 	<h2 style="text-align: center;">make account</h2>
-	<div class="big-form">
-		<form action="/register" method="post">
-			{{ render_field(form.username) }}<br />
-			{{ render_field(form.password) }}<br />
-			{{ render_field(form.confirm)  }}<br />
-			<img src="/captcha" alt="captcha" /><br />
-			{{ render_field(form.captcha)  }}<br />
-			<input type="submit" value="make account" />
-		</form>
-	</div>
+	<div class="big-form">{{ register_form() }}</div>
 
 	<p>your posts will be stored securely on my server,
 	and will be deleted at their scheduled time or at any request</p>

@@ -728,7 +728,8 @@ def send_votes(post_id):
 # So you can still access about when logged in
 @app.route("/about")
 def about():
-	return render_template("about/index.html")
+	form = Registration_Form(request.form)
+	return render_template("about/index.html", form=form)
 
 @app.route("/about/security")
 def about_security():
