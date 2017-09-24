@@ -646,7 +646,6 @@ def edit_post(post_id):
 		flash("it appears you are not the owner of this post, or you are not logged in")
 		return redirect("/post/" + str(post_id))
 	form = Submit_Form(request.form, obj=post)
-	form.disable_age.data = not post.allow_age
 	if request.method == "POST" and form.validate():
 		post.__init__(
 			current_user.user_id,
@@ -664,6 +663,7 @@ def edit_post(post_id):
 	else:
 		# We use the date rather than relative for UX
 		form.expires_date.data = post.expires
+		form.disable_age.data = not post.allow_age
 		return render_template("submit.html", form=form, edit=True)
 
 
