@@ -443,8 +443,11 @@ class Vote(db.Model):
 	def get_age_vote(cls, post_id):
 		vote = (db.session.query(cls.vote_age)
 			.filter_by(user_id=current_user.user_id, item_on_id=post_id, vote_type="age")
-			.first()[0])
-		return vote
+			.first())
+		if vote:
+			return vote[0]
+		else:
+			return None
 
 	@classmethod
 	def get_average_age(cls, post_id):
@@ -643,6 +646,7 @@ def edit_post(post_id):
 		flash("it appears you are not the owner of this post, or you are not logged in")
 		return redirect("/post/" + str(post_id))
 	form = Submit_Form(request.form, obj=post)
+	form.disable_age.data = not post.allow_age
 	if request.method == "POST" and form.validate():
 		post.__init__(
 			current_user.user_id,
