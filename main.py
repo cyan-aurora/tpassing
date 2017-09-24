@@ -356,16 +356,18 @@ class Comment(db.Model):
 class Vote(db.Model):
 	# Though all other fields will never be the same, each one could be duplicate
 	vote_id = db.Column(db.Integer, primary_key=True)
-	vote_type = db.Column(db.Enum("comment-agree", "comment-quality", "post-passes", "post-quality"))
+	vote_type = db.Column(db.Enum("comment-agree", "comment-quality", "post-passes", "post-quality", "age"))
 	item_on_id = db.Column(db.Integer) # It's a foreignkey but can't specify because could be from any class
 	user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"))
-	vote_value = db.Column(db.Enum("up", "down", "maybe"))
+	vote_value = db.Column(db.Enum("up", "down", "maybe", "age"))
+	vote_age = db.Column(db.Integer)
 
-	def __init__(self, vote_type, item_on_id, vote_value):
+	def __init__(self, vote_type, item_on_id, vote_value, vote_age=0):
 		self.vote_type    = vote_type
 		self.item_on_id   = int(item_on_id)
 		self.vote_value   = vote_value
 		self.user_id      = int(current_user.user_id)
+		self.vote_age     = int(vote_age)
 
 	def __repr__(self):
 		return "<%r Vote on %r by %r>" % (self.vote_type, self.item_on_id, self.user_id)
@@ -381,35 +383,44 @@ class Vote(db.Model):
 		return vote_query.first() # Guaranteed to only be one
 
 	@classmethod
-	def vote(cls, vote_type, item_id, vote_value):
+	def vote(cls, vote_type, item_id, vote_value, vote_age=0):
 		item_id = int(item_id)
+		vote_age = int(vote_age)
 		vote = cls.get(vote_type, item_id, current_user.user_id)
 		rv = ""
 		if vote:
-			if vote.vote_value == vote_value:
+			if vote.vote_value == vote_value and vote_age == 0:
 				# Undoing a previously done vote
 				db.session.delete(vote)
 				rv = ("undo", vote_value)
 			else:
 				# A vote of another type was previously made
 				# Send back the previous value
-				rv = ("switch", vote.vote_value)
-				# Modify its vote type
+				previous = vote.vote_value
+				# If it's an age, we send the age instead
+				if vote.vote_type == "age":
+					previous = vote.vote_age
+				rv = ("switch", previous)
+				# Modify the vote
 				vote.vote_value = vote_value
+				vote.vote_age = vote_age
 		else:
-			vote = cls(vote_type, item_id, vote_value)
+			vote = cls(vote_type, item_id, vote_value, vote_age)
 			db.session.add(vote)
 			rv = ("vote", "")
 		db.session.commit()
 		return rv
 
 	@classmethod
-	def count_on_id(cls, item_id, vote_type, vote_value):
-		query = cls.query.filter_by(item_on_id=item_id,
-			vote_type=vote_type,
-			vote_value=vote_value
-			)
-		return query.count()
+	def count_on_id(cls, item_id, vote_type, vote_value=0):
+		if vote_type == "age":
+			rv = cls.get_median_age(item_id)
+		else:
+			rv = cls.query.filter_by(item_on_id=item_id,
+				vote_type=vote_type,
+				vote_value=vote_value
+				).count()
+		return rv
 
 	@classmethod
 	def get_post_votes(cls, post_id):
@@ -419,12 +430,36 @@ class Vote(db.Model):
 			.filter(cls.user_id == current_user.user_id)\
 			.filter(Comment.post_id == int(post_id))\
 			.union_all(db.session.query(cls.item_on_id, cls.vote_type, cls.vote_value)
-				.filter((cls.vote_type == "post-passes") | (cls.vote_type == "post-quality"))
+				.filter((cls.vote_type == "post-passes") | (cls.vote_type == "post-quality") | (cls.vote_type == "age"))
 				.join(Post, Post.post_id == cls.item_on_id)
 				.filter(cls.user_id == current_user.user_id)\
 				.filter(Post.post_id == int(post_id))
 			).all()
 		return votes
+
+	@classmethod
+	def get_age_vote(cls, post_id):
+		vote = (db.session.query(cls.vote_age)
+			.filter_by(user_id=current_user.user_id, item_on_id=post_id, vote_type="age")
+			.first()[0])
+		return vote
+
+	@classmethod
+	def get_average_age(cls, post_id):
+		votes = (db.session.query(db.func.avg(cls.vote_age))
+			.filter(cls.vote_type == "age")
+			.filter(cls.item_on_id == int(post_id))
+			).first()
+		return int(votes[0])
+
+	@classmethod
+	def get_median_age(cls, post_id):
+		count = cls.query.filter_by(vote_type="age", item_on_id=int(post_id)).count()
+		votes = (db.session.query(cls.vote_age)
+			.filter_by(vote_type="age", item_on_id=int(post_id))
+			.order_by(cls.vote_age)
+			).limit(int(count/2)+1).all()
+		return votes[int(count/2)][0]
 
 	@classmethod
 	def comment_subq(cls, vote_type, vote_value):
@@ -703,13 +738,24 @@ def vote_on_post():
 	item_id = request.args.get("id")
 	vote_type = request.args.get("type")
 	vote_value = request.args.get("value")
-	action, previous = Vote.vote(vote_type, item_id, vote_value)
+	vote_age = 0
 	rv = {}
+	if vote_type == "age":
+		if vote_value.isdigit():
+			vote_age = int(vote_value)
+			vote_value = "age"
+			rv["age"] = vote_age
+		else:
+			rv["error"] = "Value for age votes should be a number."
+			return json.dumps(rv)
+	action, previous = Vote.vote(vote_type, item_id, vote_value, vote_age)
 	rv["id"] = item_id
 	rv["type"] = vote_type
 	rv["value"] = vote_value if action != "undo" else ""
 	rv["performed"] = action
 	rv["previous"] = previous
+	if vote_type =="age":
+		rv["med_age"] = Vote.get_median_age(item_id)
 	return json.dumps(rv)
 
 @app.route("/post/<post_id>/votes")
@@ -723,6 +769,7 @@ def send_votes(post_id):
 		vote_dict["id"]    = vote[0]
 		vote_dict["type"]  = vote[1]
 		vote_dict["value"] = vote[2]
+	rv["age"] = Vote.get_age_vote(post_id)
 	return json.dumps(rv)
 
 # So you can still access about when logged in
