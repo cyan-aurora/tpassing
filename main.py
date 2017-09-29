@@ -170,15 +170,16 @@ class Captcha_Manager():
 captcha = Captcha_Manager()
 
 class User(db.Model, UserMixin):
-	user_id  = db.Column(db.Integer, primary_key=True)
-	username = db.Column(db.String(40), unique=True)
-	password = db.Column(db.String(60))
-	posts    = db.relationship("Post")
-	comments = db.relationship("Comment")
+	user_id        = db.Column(db.Integer, primary_key=True)
+	username       = db.Column(db.String(40), unique=True)
+	password       = db.Column(db.String(60))
+	posts          = db.relationship("Post")
+	comments       = db.relationship("Comment")
+	password_reset = db.Column(db.Integer)
 
 	def __init__(self, username, password):
 		self.username = username.encode("utf-8")
-		self.password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+		self.password = self.hash_password(password)
 
 	def __repr__(self):
 		return "<User %r>" % self.username
@@ -188,18 +189,34 @@ class User(db.Model, UserMixin):
 		user = User.query.filter_by(username=name).first()
 		return user
 
+	@classmethod
+	def get_by_reset_token(cls, token):
+		user = User.query.filter_by(password_reset=int(token)).first()
+		return user
+
+	@classmethod
+	def hash_password(self, password):
+		return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+
 	def init_login(self):
 		pass # TODO: Remove?
 
 	# Flask login interface
 	def login(self, given_password):
-		given_password = given_password.encode("utf-8")
-		correct_hash = self.password.encode("utf-8")
-		if correct_hash and bcrypt.checkpw(given_password, correct_hash):
+		if self.correct_password(given_password):
 			login_user(self)
+			# TODO: Isn't this outdated / unused??
 			identity_changed.send(current_app._get_current_object(), identity=Identity(self.user_id))
 			return True
 		return False
+	
+	def correct_password(self, given_password):
+		given_password = given_password.encode("utf-8")
+		correct_hash = self.password.encode("utf-8")
+		if correct_hash and bcrypt.checkpw(given_password, correct_hash):
+			return True
+		return False
+
 	def get_id(self):
 		return str(self.user_id)
 
@@ -551,6 +568,13 @@ class Registration_Form(Form):
 		check_captcha
 	], render_kw={"placeholder": "enter the text above"})
 
+class Password_Reset_Form(Registration_Form):
+	# Username NOT required to be unique (shouldn't be)
+	username = StringField("", [
+		validators.DataRequired(),
+		validators.Length(min=1, max=99)
+	], render_kw={"placeholder": "existing account username"})
+
 ### ROUTES
 
 @app.route("/")
@@ -855,6 +879,30 @@ def register_page():
 		flash("account created successfully")
 		return redirect("/")
 	return render_template("register.html", form=form)
+
+@app.route("/reset/<token>", methods=["get", "post"])
+def password_reset(token):
+	form = Password_Reset_Form(request.form)
+	user = User.get_by_reset_token(token)
+	if not user:
+		flash("sorry, but that password reset link was not found. this may mean that your account was compromised. please email cyanauroratp@gmail!")
+		return render_template("no-login.html")
+	if request.method == "POST" and form.validate():
+		# Success or not, this token is now invalidated
+		user.password_reset = 0;
+		if form.username.data == user.username:
+			user.password = User.hash_password(form.password.data)
+			db.session.commit()
+			user.login(form.password.data)
+			flash("password updated successfully")
+			return redirect("/")
+		else:
+			flash("incorrect username or reset link. this reset link is now expired. please email cyanauroratp@gmail.com for a new one")
+			db.session.commit()
+			return redirect("/")
+	return render_template("register.html", form=form, reset=True)
+
+@app.route("/reset/generate", methods=["get", "post"])
 
 @app.route("/submit", methods=["get", "post"])
 @login_required

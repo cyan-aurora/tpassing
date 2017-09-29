@@ -1,22 +1,28 @@
 {% extends "standard.html" %}
 
 {% macro register_form() %}
-	<form action="/register" method="post">
+	<form action="{% if not reset %}/register{% endif %}" method="post">
 		{{ render_field(form.username) }}<br />
 		{{ render_field(form.password) }}<br />
 		{{ render_field(form.confirm)  }}<br />
 		<img src="/captcha" alt="captcha" /><br />
 		{{ render_field(form.captcha)  }}<br />
-		<input type="submit" value="make account" />
+		<input type="submit" value="{% if reset %}update password{% else %}make account{% endif %}" />
 	</form>
 {% endmacro %}
 
 {% block main %}
-	<h2 style="text-align: center;">make account</h2>
+	{% if reset %}
+		<h2 style="text-align: center;">reset password</h2>
+	{% else %}
+		<h2 style="text-align: center;">make account</h2>
+	{% endif %}
 	<div class="big-form">{{ register_form() }}</div>
 
-	<p>your posts will be stored securely on my server,
-	and will be deleted at their scheduled time or at any request</p>
-	<p>if you have any questions, please email me at
+	{% if not reset %}
+		<p>your posts will be stored securely on my server,
+		and will be deleted at their scheduled time or at any request</p>
+		<p>if you have any questions, please email me at
 		<a href="mailto:cyanauroratp@gmail.com">cyanauroratp@gmail.com</a></p>
+	{% endif %}
 {% endblock %}
