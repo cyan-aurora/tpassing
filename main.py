@@ -30,7 +30,8 @@ from flask_login import LoginManager, login_required, login_user, logout_user, c
 from flask_principal import Principal, Identity, AnonymousIdentity, identity_changed, Permission, ActionNeed
 from flask_moment import Moment
 from flask_sslify import SSLify
-from wtforms import Form, StringField, PasswordField, TextAreaField, BooleanField, DateField, validators, ValidationError
+from wtforms import Form, validators, ValidationError
+import wtforms
 from flaskext.markdown import Markdown
 
 secure_config = configparser.ConfigParser()
@@ -175,6 +176,8 @@ class User(db.Model, UserMixin):
 	password       = db.Column(db.String(60))
 	posts          = db.relationship("Post")
 	comments       = db.relationship("Comment")
+	email          = db.Column(db.String(40))
+	updates        = db.Column(db.Boolean)
 	password_reset = db.Column(db.Integer)
 
 	def __init__(self, username, password):
@@ -209,7 +212,7 @@ class User(db.Model, UserMixin):
 			identity_changed.send(current_app._get_current_object(), identity=Identity(self.user_id))
 			return True
 		return False
-	
+
 	def correct_password(self, given_password):
 		given_password = given_password.encode("utf-8")
 		correct_hash = self.password.encode("utf-8")
@@ -524,11 +527,11 @@ class View(db.Model):
 
 
 class Login_Form(Form):
-	username = StringField("", [
+	username = wtforms.StringField("", [
 		validators.DataRequired(),
 		validators.Length(min=1, max=99)
 	], render_kw={"placeholder": "username"})
-	password = PasswordField("", [
+	password = wtforms.PasswordField("", [
 		validators.DataRequired(),
 		# We allow minimum 6 in the login form because we previously allowed
 		# password of 6 length in registration
@@ -536,41 +539,46 @@ class Login_Form(Form):
 	], render_kw={"placeholder": "password"})
 
 class Submit_Form(Form):
-	url = StringField("", [
+	url = wtforms.StringField("", [
 		validators.URL(),
 		validators.Optional()
 	], render_kw={"placeholder": "link (optional)"})
-	gender = StringField("", [
+	gender = wtforms.StringField("", [
 	], render_kw={"placeholder": "target gender (optional)"})
-	description = TextAreaField("", [
+	description = wtforms.TextAreaField("", [
 	], render_kw={"placeholder": "description / any additional text (optional)"})
-	expires = StringField("days to expiration:", [
+	expires = wtforms.StringField("days to expiration:", [
 	], render_kw={"placeholder": "days"}, default=30)
-	expires_date = DateField("expiration date:")
-	disable_age = BooleanField("do not allow users to vote on my apparent age")
-	require_captcha = BooleanField("require a captcha to view this post (prevent robots from accessing)")
-	require_trust = BooleanField("require an upvoted post or comment to view this post (prevent trolls from accessing)")
+	expires_date = wtforms.DateField("expiration date:")
+	disable_age = wtforms.BooleanField("do not allow users to vote on my apparent age")
+	require_captcha = wtforms.BooleanField("require a captcha to view this post (prevent robots from accessing)")
+	require_trust = wtforms.BooleanField("require an upvoted post or comment to view this post (prevent trolls from accessing)")
 
-class Registration_Form(Form):
-	username = StringField("", [
+class Register_Form(Form):
+	username = wtforms.StringField("", [
 		validators.DataRequired(),
 		username_unique,
 		validators.Length(min=1, max=99)
 	], render_kw={"placeholder": "username"})
-	password = PasswordField("", [
+	password = wtforms.PasswordField("", [
 		validators.DataRequired(),
 		validators.Length(min=8, max=200)
 	], render_kw={"placeholder": "password"})
-	confirm = PasswordField("", [
+	confirm = wtforms.PasswordField("", [
 		validators.EqualTo("password", "Check that the passwords match")
 	], render_kw={"placeholder": "confirm password"})
-	captcha = StringField("", [
+	email = wtforms.StringField("", [
+		validators.Email(),
+		validators.Length(min=4, max=40)
+	], render_kw={"placeholder": "email (optional)"})
+	updates = wtforms.BooleanField("recieve an update when a post is made or i get feedback (never more than weekly)")
+	captcha = wtforms.StringField("", [
 		check_captcha
 	], render_kw={"placeholder": "enter the text above"})
 
-class Password_Reset_Form(Registration_Form):
+class Password_Reset_Form(Register_Form):
 	# Username NOT required to be unique (shouldn't be)
-	username = StringField("", [
+	username = wtforms.StringField("", [
 		validators.DataRequired(),
 		validators.Length(min=1, max=99)
 	], render_kw={"placeholder": "existing account username"})
@@ -810,7 +818,7 @@ def send_votes(post_id):
 # So you can still access about when logged in
 @app.route("/about")
 def about():
-	form = Registration_Form(request.form)
+	form = Register_Form(request.form)
 	return render_template("about/index.html", form=form)
 
 @app.route("/about/security")
@@ -870,9 +878,12 @@ def logout():
 
 @app.route("/register", methods=["get", "post"])
 def register_page():
-	form = Registration_Form(request.form)
+	form = Register_Form(request.form)
 	if request.method == "POST" and form.validate():
 		user = User(form.username.data, form.password.data)
+		if form.email:
+			user.email = form.email.data;
+		user.updates = form.updates.data;
 		db.session.add(user)
 		db.session.commit()
 		user.login(form.password.data)
