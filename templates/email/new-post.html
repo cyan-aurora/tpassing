@@ -1,0 +1,31 @@
+<html>
+	<body style="background-color: #f4f9fe; padding: 20px; color: #110310;">
+		<h1>tpassing</h1>
+		<h2>hi {{ to.username }}</h2>
+		{% if new_posts|length == 1 %}
+			{% set post = new_posts[0] %}
+			<h2>{{ post.user.username }} has made a new post</h2>
+		{% else %}
+			<h2>there have been some new posts from tpassing</h2>
+			<table class="browse" style="width: 100%; font-size: 1.2em;">
+				<tr>
+					<td>link</td>
+					<td>target gender</td>
+					<td>date submitted</td>
+				</tr>
+			{% for post in new_posts %}
+				<tr>
+					<td>
+						<a href="https://tpassing.com/post/{{ post.post_id }}">view</a>
+					</td>
+					<td>{{ post.gender }}</td>
+					<td>{{ post.created }}</td>
+				</tr>
+			{% endfor %}
+			</table>
+		{% endif %}
+		<br />
+		<hr />
+		<a href="https://tpassing.com/unsubscribe/{{ to.user_id }}/{{ to.username }}">unsubscribe</a>
+	</body>
+</html>

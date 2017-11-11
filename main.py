@@ -915,6 +915,19 @@ def password_reset(token):
 
 @app.route("/reset/generate", methods=["get", "post"])
 
+# Require both user_id and username to avoid abuse
+@app.route("/unsubscribe/<user_id>/<username>")
+def unsubscribe(user_id, username):
+	user = User.get_by_name(username)
+	if user.user_id == int(user_id):
+		user.updates = False
+		db.session.commit()
+		flash("successfully unsubscribed from email updates")
+		return redirect("/")
+	else:
+		flash("the user id and username did not match. is the unsubscribe link correct?")
+		return redirect("/")
+
 @app.route("/submit", methods=["get", "post"])
 @login_required
 def submission_page():
