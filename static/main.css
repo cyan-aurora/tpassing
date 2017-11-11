@@ -242,7 +242,7 @@ textarea {
 	margin: 20px 0;
 	width: 100%;
 }
-.full-form input[type="checkbox"] {
+input[type="checkbox"] {
 	display: inline;
 	width: auto;
 	margin: 0;

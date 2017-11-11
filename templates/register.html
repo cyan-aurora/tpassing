@@ -5,6 +5,12 @@
 		{{ render_field(form.username) }}<br />
 		{{ render_field(form.password) }}<br />
 		{{ render_field(form.confirm)  }}<br />
+		{% if not reset %}
+			allows password recovery (optional)
+			{{ render_field(form.email)    }}<br />
+			{{ render_field(form.updates, True) }}<br />
+			<p>you can add an email later through <a href="/me">settings</a></p>
+		{% endif %}
 		<img src="/captcha" alt="captcha" /><br />
 		{{ render_field(form.captcha)  }}<br />
 		<input type="submit" value="{% if reset %}update password{% else %}make account{% endif %}" />
