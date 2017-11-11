@@ -569,7 +569,8 @@ class Register_Form(Form):
 	], render_kw={"placeholder": "confirm password"})
 	email = wtforms.StringField("", [
 		validators.Email(),
-		validators.Length(min=4, max=40)
+		validators.Length(min=4, max=40),
+		validators.Optional()
 	], render_kw={"placeholder": "email (optional)"})
 	updates = wtforms.BooleanField("recieve an update when a post is made or i get feedback (never more than weekly)")
 	captcha = wtforms.StringField("", [
