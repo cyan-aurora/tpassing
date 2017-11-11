@@ -584,6 +584,14 @@ class Password_Reset_Form(Register_Form):
 		validators.Length(min=1, max=99)
 	], render_kw={"placeholder": "existing account username"})
 
+class Settings_Form(Form):
+	email = wtforms.StringField("", [
+		validators.Email(),
+		validators.Length(min=4, max=40),
+		validators.Optional()
+	], render_kw={"placeholder": "email (optional)"})
+	updates = wtforms.BooleanField("recieve an update when a post is made or i get feedback (never more than weekly)")
+
 ### ROUTES
 
 @app.route("/")
@@ -607,10 +615,16 @@ def browse():
 	else:
 		return about()
 
-@app.route("/me")
+@app.route("/me", methods=["get", "post"])
 @login_required
 def self_page():
-	return render_template("user.html")
+	form = Settings_Form(request.form, obj=current_user)
+	if request.method == "POST" and form.validate():
+		current_user.email = form.email.data
+		current_user.updates = form.updates.data
+		db.session.commit()
+		flash("settings updates successfully")
+	return render_template("user.html", form=form)
 
 @app.route("/captcha")
 def captcha_image():

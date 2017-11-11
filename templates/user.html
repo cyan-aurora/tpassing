@@ -7,6 +7,14 @@
 		{% set render_user = current_user %}
 		{% set self = True %}
 	{% endif %}
+	{% if self %}
+		<h2>my settings</h2>
+		<form class="full-form" method="post">
+			{{ render_field(form.email) }}
+			{{ render_field(form.updates, True) }}
+			<input type="submit" value="update settings">
+		</form>
+	{% endif %}
 	{% set possessive = "my" if self else  render_user.username + "'s" %}
 	<h2>{{ possessive }} posts</h2>
 	<table class="browse">
