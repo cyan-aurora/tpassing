@@ -2,7 +2,8 @@
 secure.ini
 
 # Don't upload conflicting logs etc
-delete-expired.log
+cron.log
+templates/email/last-email.txt
 
 # Created by https://www.gitignore.io/api/vim,linux,python
 

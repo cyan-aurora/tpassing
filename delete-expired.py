@@ -9,7 +9,6 @@ import datetime
 
 q = Post.query.filter(Post.expires <= datetime.datetime.now())
 count = q.count()
-print(datetime.datetime.now(), end="> ")
 print("Found " + str(count) + " expired entries", end="")
 # Add this to make grepping easier
 if count:
@@ -19,3 +18,4 @@ else:
 	print()
 q.delete(synchronize_session="fetch")
 db.session.commit()
+
