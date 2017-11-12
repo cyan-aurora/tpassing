@@ -130,7 +130,12 @@ a {
 	padding: 10px;
 }
 .original-poster {
-	color: #2471a8;
+	padding: .1em;
+	margin: .1em;
+	background-color: #74b1dc;
+}
+.original-poster a {
+	color: #f4f9fe;
 }
 
 table {

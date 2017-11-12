@@ -173,9 +173,13 @@
 	- <span class="{{ id }} {{ type }} {{ value }} count">{{ votes(id, type, value) }}</span>{% if not is_end %} |{% endif %}
 {% endmacro %}
 
+{%- macro user_link(user) %}
+	<a href="/user/{{ user.user_id }}">{{ user.username }}</a>
+{% endmacro %}
+
 {% block main %}
 	{% if post.url %}<a class="bigger" href="/post/{{ post.post_id }}/link">link</a>{% endif %}
-	<p>user: {{ post.user.username }}</p>
+	<p>user: {{ user_link(post.user) }}</p>
 	<p>target gender: {{ post.gender }}</p>
 	{% if post.description %}
 		<div class="user-entered">{{ post.description|e|markdown }}</div>
@@ -222,7 +226,7 @@
 	{% for comment in comments %}
 		<div style="margin: 20px 0;">
 			<span{% if comment.user_id == post.user_id %} class="original-poster"{% endif %}>
-				{{ comment.user.username }}
+				{{ user_link(comment.user) }}
 			</span>
 			{% if comment.user_id == current_user.user_id %}
 				<span style="float: right">

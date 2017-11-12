@@ -1,12 +1,14 @@
 {% extends "standard.html" %}
 
 {% block main %}
+
 	{% if user %}
 		{% set render_user = user %}
 	{% else %}
 		{% set render_user = current_user %}
 		{% set self = True %}
 	{% endif %}
+
 	{% if self %}
 		<h2>my settings</h2>
 		<form class="full-form" method="post">
@@ -15,38 +17,51 @@
 			<input type="submit" value="update settings">
 		</form>
 	{% endif %}
+
 	{% set possessive = "my" if self else  render_user.username + "'s" %}
-	<h2>{{ possessive }} posts</h2>
-	<table class="browse">
-		<tr>
-			<td>link</td>
-			<td>target gender</td>
-			<td>date submitted</td>
-		</tr>
-	{% for post in render_user.posts %}
-		<tr onclick="window.document.location='/post/{{ post.post_id }}';">
-			<td>
-				<a href="/post/{{ post.post_id }}">view</a>
-			</td>
-			<td>{{ post.gender }}</td>
-			<td>{{ moment(post.created).format("YYYY-MM-DD") }}</td>
-		</tr>
-	{% endfor %}
-	</table>
-	<h2>{{ possessive }} comments</h2>
-	<table class="browse">
-		<tr>
-			<td>post</td>
-			<td>text</td>
-		</tr>
-		{% for comment in render_user.comments %}
-			<tr onclick="window.document.location='/post/{{ comment.post_id }}';">
+
+	{% if render_user.posts %}
+		<h2>{{ possessive }} posts</h2>
+		<table class="browse">
+			<tr>
+				<td>link</td>
+				<td>target gender</td>
+				<td>date submitted</td>
+			</tr>
+		{% for post in render_user.posts %}
+			<tr onclick="window.document.location='/post/{{ post.post_id }}';">
 				<td>
-					<a href="/post/{{ comment.post_id }}">/post/{{ comment.post_id }}</a>
+					<a href="/post/{{ post.post_id }}">view</a>
 				</td>
-				<td class="no-p">
-					{{ comment.text|e|truncate(90)|markdown }}
-				</td>
+				<td>{{ post.gender }}</td>
+				<td>{{ moment(post.created).format("YYYY-MM-DD") }}</td>
 			</tr>
 		{% endfor %}
+		</table>
+	{% else %}
+		<h2>{{ render_user.username }} has no unexpired posts</h2>
+	{% endif %}
+
+	{% if render_user.comments %}
+		<h2>{{ possessive }} comments</h2>
+		<table class="browse">
+			<tr>
+				<td>post</td>
+				<td>text</td>
+			</tr>
+			{% for comment in render_user.comments %}
+				<tr onclick="window.document.location='/post/{{ comment.post_id }}';">
+					<td>
+						<a href="/post/{{ comment.post_id }}">/post/{{ comment.post_id }}</a>
+					</td>
+					<td class="no-p">
+						{{ comment.text|e|truncate(90)|markdown }}
+					</td>
+				</tr>
+			{% endfor %}
+		</table>
+	{% else %}
+		<h2>{{ render_user.username }} has no unexpired comments</h2>
+	{% endif %}
+
 {% endblock %}

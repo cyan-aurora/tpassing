@@ -626,6 +626,12 @@ def self_page():
 		flash("settings updates successfully")
 	return render_template("user.html", form=form)
 
+@app.route("/user/<user_id>")
+@login_required
+def user_page(user_id):
+	user=User.query.filter_by(user_id=int(user_id)).first()
+	return render_template("user.html", user=user)
+
 @app.route("/captcha")
 def captcha_image():
 	# Add headers to both force latest IE rendering engine or Chrome Frame
@@ -930,11 +936,10 @@ def password_reset(token):
 
 @app.route("/reset/generate", methods=["get", "post"])
 
-# Require both user_id and username to avoid abuse
-@app.route("/unsubscribe/<user_id>/<username>")
-def unsubscribe(user_id, username):
-	user = User.get_by_name(username)
-	if user.user_id == int(user_id):
+@app.route("/unsubscribe/<user_id>")
+def unsubscribe(user_id):
+	user = User.query.filter_by(user_id=int(user_id)).first()
+	if user:
 		user.updates = False
 		db.session.commit()
 		flash("successfully unsubscribed from email updates")
