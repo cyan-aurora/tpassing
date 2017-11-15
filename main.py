@@ -205,9 +205,9 @@ class User(db.Model, UserMixin):
 		pass # TODO: Remove?
 
 	# Flask login interface
-	def login(self, given_password):
+	def login(self, given_password, remember):
 		if self.correct_password(given_password):
-			login_user(self)
+			login_user(self, remember=remember)
 			# TODO: Isn't this outdated / unused??
 			identity_changed.send(current_app._get_current_object(), identity=Identity(self.user_id))
 			return True
@@ -224,9 +224,9 @@ class User(db.Model, UserMixin):
 		return str(self.user_id)
 
 	@classmethod
-	def full_login(self, given_username, given_password):
+	def full_login(self, given_username, given_password, remember):
 		user = User.query.filter_by(username=given_username).first()
-		if user and user.login(given_password):
+		if user and user.login(given_password, remember):
 			return True
 		return False
 
@@ -537,6 +537,7 @@ class Login_Form(Form):
 		# password of 6 length in registration
 		validators.Length(min=6, max=60)
 	], render_kw={"placeholder": "password"})
+	remember = wtforms.BooleanField("remember me")
 
 class Submit_Form(Form):
 	url = wtforms.StringField("", [
@@ -874,7 +875,7 @@ def reddit_proof():
 def login():
 	form = Login_Form(request.form)
 	if request.method == "POST" and form.validate():
-		success = User.full_login(request.form["username"], request.form["password"])
+		success = User.full_login(form.username.data, form.password.data, form.remember.data)
 		if success:
 			next_url = request.args.get("next")
 			if not is_safe_url(next_url):
