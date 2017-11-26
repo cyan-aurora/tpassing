@@ -11,4 +11,3 @@ SQLAlchemy-Utils
 bcrypt
 captcha
 gunicorn
-email

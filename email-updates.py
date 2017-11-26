@@ -35,7 +35,8 @@ if last + datetime.timedelta(7) > datetime.datetime.now():
 new_posts = Post.query.filter(Post.created > last).all()
 
 if not new_posts:
-	sys.exit("No new posts")
+	print("No new posts")
+	sys.exit()
 
 email_users = User.query.filter((User.updates == 1) & (User.email != "")).all()
 
