@@ -9,56 +9,6 @@
 {% endmacro %}
 {% from "register.html" import register_form with context %}
 
-{% block head %}
-
-	{{ super() }}
-	<script>
-		function collapseExpand(id) {
-			$("#"+id).slideToggle();
-			$("#"+id+"-title").toggleClass("collapsed-title");
-		}
-		$(function() {
-			$(".section-title").each(function() {
-
-				var id = $(this).attr("id").replace("-title", "");
-
-				$(this).addClass("collapsed-title");
-				$("#"+id).addClass("collapsed");
-				$(this).attr("title", "click to read more");
-
-				$(this).click(function() {
-					collapseExpand(id);
-				});
-
-			});
-		});
-	</script>
-	<style>
-		.section, .section-title {
-			background-color: #cbe5fe;
-			padding: 0.5em;
-		}
-		.section-title {
-			cursor: pointer;
-			margin-bottom: 0;
-			border-bottom: 1px solid #110310;
-		}
-		.section-title::after {
-			content: " \25B2"
-		}
-		.collapsed-title.section-title::after {
-			content: " \25BC"
-		}
-		.collapsed-title {
-			border-bottom: none;
-		}
-		.collapsed {
-			display: none;
-		}
-	</style>
-
-{% endblock %}
-
 {% block main %}
 
 	<h2>a fair, safe place to see how well you pass</h2>

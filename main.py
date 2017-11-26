@@ -855,8 +855,12 @@ def about_coolness():
 def about_feedback():
 	return render_template("about/feedback.html")
 
-@app.route("/about/links")
+@app.route("/about/free")
 def about_links():
+	return render_template("about/free.html")
+
+@app.route("/about/links")
+def about_freedom():
 	return render_template("about/links.html")
 
 @app.route("/about/donate")
@@ -874,6 +878,7 @@ def reddit_proof():
 @app.route("/login", methods=["get", "post"])
 def login():
 	form = Login_Form(request.form)
+	reg_form = Register_Form(request.form)
 	if request.method == "POST" and form.validate():
 		success = User.full_login(form.username.data, form.password.data, form.remember.data)
 		if success:
@@ -883,7 +888,7 @@ def login():
 			return redirect(next_url or "/")
 		else:
 			return render_template("no-login.html")
-	return render_template("login-form.html", login_form=form)
+	return render_template("login-form.html", login_form=form, form=reg_form)
 
 @app.route("/logout")
 def logout():

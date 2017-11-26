@@ -40,6 +40,28 @@
 		crossorigin="anonymous"></script>
 	{{ moment.include_moment() }}
 	<style>{% block style %}{% endblock %}</style>
+	<script>
+		// "Sections" with expand buttons
+		function collapseExpand(id) {
+			$("#"+id).slideToggle();
+			$("#"+id+"-title").toggleClass("collapsed-title");
+		}
+		$(function() {
+			$(".section-title").each(function() {
+
+				var id = $(this).attr("id").replace("-title", "");
+
+				$(this).addClass("collapsed-title");
+				$("#"+id).addClass("collapsed");
+				$(this).attr("title", "click to read more");
+
+				$(this).click(function() {
+					collapseExpand(id);
+				});
+
+			});
+		});
+	</script>
 {% endblock %}
 </head>
 <body>

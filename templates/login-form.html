@@ -1,4 +1,5 @@
 {% extends "standard.html" %}
+{% from "register.html" import register_form with context %}
 
 {% block top_bar %}
 	<div class="centered-bar">
@@ -11,5 +12,21 @@
 	<p style="text-align: center;">you need to sign in to view this page</p>
 	<div class="big-form">
 		{{ login_form_macro(True) }}
+		<br />
+		<hr />
+		<p class="section-title" id="register-section-title">make an account</p>
+		<div class="section" id="register-section">
+			<div>{{ register_form() }}</div>
+		</div>
+		<p class="section-title" id="about-section-title">about tpassing</p>
+		<div class="section" id="about-section">
+			<p>tpassing is a place for trans people to get constructive feedback on how
+			well they pass</p>
+			<p>tpassing is <a href="/about/security">secure</a>,
+			<a href="/about/coolness">fair</a>,
+			<a href="/about/feedback">constructive</a>,
+			and <a href="/about/free">free</a>.</p>
+			<p><a href="/about">read more about tpassing</a></p>
+		</div>
 	</div>
 {% endblock %}

@@ -172,6 +172,28 @@ tr:nth-child(even) {
 	color: #a222a5;
 }
 
+.section, .section-title {
+	background-color: #cbe5fe;
+	padding: 0.5em;
+}
+.section-title {
+	cursor: pointer;
+	margin-bottom: 0;
+	border-bottom: 1px solid #110310;
+}
+.section-title::after {
+	content: " \25B2"
+}
+.collapsed-title.section-title::after {
+	content: " \25BC"
+}
+.collapsed-title {
+	border-bottom: none;
+}
+.collapsed {
+	display: none;
+}
+
 .bigger {
 	font-size: 1.5em;
 }
