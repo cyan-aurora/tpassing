@@ -601,7 +601,7 @@ def browse():
 	# If logged in, root is browsing. Otherwise it's explanation.
 	# Kinda like how Google Drive does it
 	if current_user.is_authenticated:
-		number_posts = 100;
+		number_posts = config.get("Interface", "max_posts")
 		show_viewed = request.args.get("show-viewed")
 		post_viewed = (db.session.query(
 				Post.post_id,
