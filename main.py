@@ -612,7 +612,7 @@ def browse():
 			.outerjoin(post_viewed, Post.post_id == post_viewed.c.post_id)
 			.filter(post_viewed.c.view_id != None if show_viewed else post_viewed.c.view_id == None)
 			.limit(number_posts).all())
-		return render_template("browse.html", posts=posts, showing_viewed=show_viewed, is_more=len(posts)==number_posts)
+		return render_template("browse.html", posts=posts, showing_viewed=show_viewed, is_more=len(posts)==number_posts, is_trusted=is_trusted_user())
 	else:
 		return about()
 

@@ -1,5 +1,11 @@
 {% extends "standard.html" %}
 
+{% block style %}
+	.blocked {
+		opacity: 0.5;
+	}
+{% endblock %}
+
 {% block main %}
 	<a href="/submit" class="bigger">submit post (request feedback)</a>
 	<p><a href="/about">about tpassing</a></p>
@@ -8,20 +14,48 @@
 	{% else %}
 		<p>viewing already-viewed posts. <a href="/browse">show unviewed posts</a></p>
 	{% endif %}
+	{% if not is_trusted %}
+		<p class="section-title" id="trust-section-title">note: you need an upvoted post or comment to view some posts</p>
+		<div class="section" id="trust-section">
+			<p>those posts are labeled as "requires trust" below</p>
+			<p>if you would like to see these posts, start by contributing
+				positively to those that you can, or submitting a post of
+				your own</p>
+			<p>this is to ensure that only people with good intentions have
+				access to this community.
+				<a href="/about/security">read more</a></p>
+			<p>you can view your current submissions by clicking the <a href="/me">settings page</a> in the top right</p>
+			<p>if you have any questions, email me at <a href="mailto:cyanauroratp@gmail.com">cyanauroratp@gmail.com</a></p>
+		</div>
+		<br />
+	{% endif %}
 	<table class="browse">
 		<tr>
 			<td>link</td>
 			<td>target gender</td>
 			<td>date submitted</td>
 		</tr>
+	<!-- Show unblocked first -->
 	{% for post in posts %}
-		<tr onclick="window.document.location='/post/{{ post.post_id }}';">
-			<td>
-				<a href="/post/{{ post.post_id }}">view</a>
-			</td>
-			<td>{{ post.gender }}</td>
-			<td>{{ moment(post.created).format("YYYY-MM-DD") }}</td>
-		</tr>
+		{% if (not post.require_trust) or is_trusted %}
+			<tr onclick="window.document.location='/post/{{ post.post_id }}';">
+				<td>
+					<a href="/post/{{ post.post_id }}">/post/{{ post.post_id }}</a>
+				</td>
+				<td>{{ post.gender }}</td>
+				<td>{{ moment(post.created).format("YYYY-MM-DD") }}</td>
+			</tr>
+		{% endif %}
+	{% endfor %}
+	<!-- Now blocked -->
+	{% for post in posts %}
+		{% if post.require_trust and not is_trusted %}
+			<tr class="blocked">
+				<td>requires trust</td>
+				<td>{{ post.gender }}</td>
+				<td>{{ moment(post.created).format("YYYY-MM-DD") }}</td>
+			</tr>
+		{% endif %}
 	{% endfor %}
 	</table>
 	{% if not showing_viewed and is_more %}<p>view posts to see more (viewed posts are hidden)</p>{% endif %}
