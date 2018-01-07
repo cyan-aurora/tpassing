@@ -913,7 +913,7 @@ def register_page():
 		user.updates = form.updates.data;
 		db.session.add(user)
 		db.session.commit()
-		user.login(form.password.data)
+		user.login(form.password.data, False)
 		flash("account created successfully")
 		return redirect("/")
 	return render_template("register.html", form=form)
@@ -931,7 +931,7 @@ def password_reset(token):
 		if form.username.data == user.username:
 			user.password = User.hash_password(form.password.data)
 			db.session.commit()
-			user.login(form.password.data)
+			user.login(form.password.data, False)
 			flash("password updated successfully")
 			return redirect("/")
 		else:
